@@ -46,6 +46,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <BookOpen className="size-5 text-accent" aria-hidden />
               {SITE_NAME}
             </Link>
+            <Link href="/leader" className="text-sm font-medium text-muted hover:text-ink">
+              For leaders
+            </Link>
           </div>
         </header>
         <main id="main" className="flex-1">

@@ -1,6 +1,7 @@
 "use server";
 
 import { submitInquiry } from "@/lib/data/studies";
+import { normalizePhone } from "@/lib/phone";
 import type { PrivateMeetingDetails } from "@/lib/types";
 
 export type JoinState =
@@ -20,8 +21,8 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function parseContact(raw: string): { email: string | null; phone: string | null } | null {
   const value = raw.trim();
   if (value.includes("@")) return EMAIL.test(value) ? { email: value, phone: null } : null;
-  const digits = value.replace(/[^\d+]/g, "");
-  return digits.replace(/\D/g, "").length >= 7 ? { email: null, phone: digits } : null;
+  const phone = normalizePhone(value);
+  return phone ? { email: null, phone } : null;
 }
 
 export async function joinStudy(

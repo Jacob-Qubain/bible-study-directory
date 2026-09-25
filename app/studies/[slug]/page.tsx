@@ -146,7 +146,11 @@ export default async function StudyPage(props: PageProps<"/studies/[slug]">) {
                 Let {hostNames} know you&apos;re coming. Takes ten seconds.
               </p>
             </div>
-            <JoinForm studyId={study.id} hostNames={hostNames} />
+            <JoinForm
+              studyId={study.id}
+              hostNames={hostNames}
+              placeName={study.format === "online" ? null : locationLabel(study)}
+            />
           </div>
         </aside>
 

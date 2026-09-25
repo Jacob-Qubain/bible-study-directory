@@ -50,8 +50,12 @@ Security:
 ## Folder structure
 
 ```
+proxy.ts                           Session refresh + sign-in guard for /leader/*
 app/
   page.tsx                         Directory (server: fetch + parse URL filters)
+  auth/confirm/route.ts            Magic-link landing
+  leader/login/                    Sign-in page + actions
+  leader/(app)/                    Dashboard, studies editor, people, profile, welcome, admin
   studies/[slug]/page.tsx          Detail: what to expect, hosts, next meeting, join
   studies/[slug]/join-form.tsx     Name + email-or-phone, useActionState
   studies/[slug]/actions.ts        joinStudy Server Action
@@ -60,7 +64,10 @@ components/
   directory/                       Directory (client filter state), FilterBar, StudyCard
   ui/                              Chip, Avatar
 lib/
-  data/studies.ts                  Supabase queries (+ seed fallback)
+  data/studies.ts                  Public queries (+ seed fallback)
+  leader/                          Leader queries + study form schema
+  supabase/                        public (anon), server (cookies), env
+  auth.ts                          getSession / requireLeader / requireAdmin
   data/seed-data.ts                Sample content (source for supabase/seed.sql)
   filters.ts  schedule.ts  calendar.ts  types.ts
 supabase/
@@ -74,12 +81,19 @@ scripts/generate-seed-sql.mts
 Schema + RLS, seed data, layout and design tokens, URL-synced filters (day, time, audience, focus, format,
 area, text search), soonest-first cards, detail page, one-step join, Google/ICS calendar, text/WhatsApp links.
 
-**Phase 2: Leaders**
-- `@supabase/ssr` cookie sessions, `/leader/login` magic link, `proxy.ts` guarding `/leader/*`.
-- Leader dashboard: my studies, pause/resume toggle, create/edit form (shadcn/ui form components).
-- Inquiry inbox with status updates; Realtime subscription for new inquiries.
-- Email/SMS notification to the leader on each inquiry (Supabase Edge Function + Resend/Twilio).
-- Photo upload to Supabase Storage.
+**Phase 2: Leaders ✅ (core)**
+- Magic-link sign-in (`/leader/login` → `/auth/confirm`), `proxy.ts` session refresh + guard on `/leader/*`.
+- Self-serve onboarding: sign in → create profile → list studies. New leaders stay hidden until an
+  admin approves them (`/leader/admin`), which keeps spam out of the directory.
+- Dashboard: my studies with Live / Paused / Awaiting approval, pause/resume, edit, delete.
+- Study editor: the next meeting date sets the weekday and biweekly rhythm; private address/link.
+- People inbox: everyone who tapped "Count me in", one-tap email/text/call, status tracking.
+- Private details moved to `study_private` so signed-in users can't read other studies' addresses.
+
+**Phase 2b: Leader follow-ups**
+- Email/SMS to the leader on each inquiry (Edge Function + Resend/Twilio). Needs custom SMTP anyway,
+  since Supabase's built-in email only reaches project team members.
+- Realtime "new person" badge; photo upload to Supabase Storage; co-leader invites.
 
 **Phase 3: Reach**
 - PWA manifest + offline shell; "near me" sort (store lat/lng, PostGIS `earth_distance`).

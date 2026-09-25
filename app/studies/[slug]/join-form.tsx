@@ -2,12 +2,20 @@
 
 import { useActionState, useState } from "react";
 import { CircleCheck, ExternalLink, MapPin } from "lucide-react";
+import { inputClass } from "@/components/ui/field";
 import { joinStudy, type JoinState } from "./actions";
 
-const inputCls =
-  "h-12 w-full rounded-xl border border-line bg-background px-4 text-base placeholder:text-muted focus:border-accent focus:outline-none aria-[invalid=true]:border-warm";
 
-export function JoinForm({ studyId, hostNames }: { studyId: string; hostNames: string }) {
+export function JoinForm({
+  studyId,
+  hostNames,
+  placeName,
+}: {
+  studyId: string;
+  hostNames: string;
+  /** Public location, shown as "Where" when the study has no private address. */
+  placeName: string | null;
+}) {
   const [state, action, pending] = useActionState<JoinState, FormData>(
     joinStudy.bind(null, studyId),
     { status: "idle" },
@@ -15,7 +23,8 @@ export function JoinForm({ studyId, hostNames }: { studyId: string; hostNames: s
   const [showNote, setShowNote] = useState(false);
 
   if (state.status === "success") {
-    const { address, meetingUrl } = state.details;
+    const { meetingUrl } = state.details;
+    const address = state.details.address ?? placeName;
     return (
       <div className="grid gap-3" role="status">
         <p className="flex items-center gap-2 font-display text-xl font-semibold">
@@ -67,7 +76,7 @@ export function JoinForm({ studyId, hostNames }: { studyId: string; hostNames: s
           required
           aria-invalid={!!fieldErrors?.name}
           aria-describedby={fieldErrors?.name ? "join-name-error" : undefined}
-          className={inputCls}
+          className={inputClass}
         />
         {fieldErrors?.name && (
           <p id="join-name-error" className="text-sm text-warm">
@@ -87,7 +96,7 @@ export function JoinForm({ studyId, hostNames }: { studyId: string; hostNames: s
           required
           aria-invalid={!!fieldErrors?.contact}
           aria-describedby={fieldErrors?.contact ? "join-contact-error" : "join-contact-hint"}
-          className={inputCls}
+          className={inputClass}
         />
         <p
           id={fieldErrors?.contact ? "join-contact-error" : "join-contact-hint"}
@@ -107,7 +116,7 @@ export function JoinForm({ studyId, hostNames }: { studyId: string; hostNames: s
             name="message"
             defaultValue={values?.message}
             rows={3}
-            className={`${inputCls} h-auto py-3`}
+            className={`${inputClass} h-auto py-3`}
             autoFocus
           />
         </div>

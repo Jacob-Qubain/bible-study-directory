@@ -18,7 +18,7 @@ export const seedTags: Tag[] = [
   { slug: "new-to-faith", label: "New to faith", category: "topic" },
 ];
 
-export const seedLeaders: (Leader & { email: string })[] = [
+export const seedLeaders: Leader[] = [
   {
     id: "0b1f3c1e-1111-4a00-8000-000000000001",
     name: "Maria Delgado",
@@ -26,7 +26,6 @@ export const seedLeaders: (Leader & { email: string })[] = [
     bio: "Mom of three, nurse by day, and the person who always has an extra chair. I've led this group for six years and love watching people find their people.",
     publicPhone: "+15125550101",
     whatsapp: true,
-    email: "maria@example.com",
   },
   {
     id: "0b1f3c1e-1111-4a00-8000-000000000002",
@@ -35,7 +34,6 @@ export const seedLeaders: (Leader & { email: string })[] = [
     bio: "Grad student in civil engineering. I started asking big questions in college and still am — bring yours.",
     publicPhone: "+15125550102",
     whatsapp: false,
-    email: "james@example.com",
   },
   {
     id: "0b1f3c1e-1111-4a00-8000-000000000003",
@@ -44,7 +42,6 @@ export const seedLeaders: (Leader & { email: string })[] = [
     bio: "Software designer and early riser. Coffee is on me; the questions are on you.",
     publicPhone: null,
     whatsapp: false,
-    email: "priya@example.com",
   },
   {
     id: "0b1f3c1e-1111-4a00-8000-000000000004",
@@ -53,7 +50,6 @@ export const seedLeaders: (Leader & { email: string })[] = [
     bio: "Retired high-school history teacher. Married 41 years to Ruth, who co-leads with me and keeps me on time.",
     publicPhone: "+15125550104",
     whatsapp: false,
-    email: "tom@example.com",
   },
   {
     id: "0b1f3c1e-1111-4a00-8000-000000000005",
@@ -62,7 +58,6 @@ export const seedLeaders: (Leader & { email: string })[] = [
     bio: "Gardener, grandmother, and resident pie baker.",
     publicPhone: null,
     whatsapp: false,
-    email: "ruth@example.com",
   },
   {
     id: "0b1f3c1e-1111-4a00-8000-000000000006",
@@ -71,7 +66,6 @@ export const seedLeaders: (Leader & { email: string })[] = [
     bio: "Contractor and dad. Our group is honest, low-key, and done by 7:30 so everyone gets to work.",
     publicPhone: "+15125550106",
     whatsapp: true,
-    email: "andre@example.com",
   },
   {
     id: "0b1f3c1e-1111-4a00-8000-000000000007",
@@ -80,7 +74,6 @@ export const seedLeaders: (Leader & { email: string })[] = [
     bio: "I moved here knowing no one. This group is the thing I wish I'd found sooner.",
     publicPhone: "+15125550107",
     whatsapp: true,
-    email: "hannah@example.com",
   },
 ];
 

@@ -1,9 +1,9 @@
-import { getSupabase } from "../supabase";
-import type { Leader, PrivateMeetingDetails, Study, Tag } from "../types";
+import { getSupabase } from "../supabase/public";
+import type { PrivateMeetingDetails, Study, Tag } from "../types";
 import { seedLeaders, seedStudies, seedTags } from "./seed-data";
 
-// Only public columns — anon has no grant on address / meeting_url / email.
-const STUDY_COLUMNS = `
+// Public columns; private address / meeting link live in study_private.
+export const STUDY_COLUMNS = `
   id, slug, title, summary, description, curriculum,
   day_of_week, start_time, duration_minutes, timezone, cadence, anchor_date,
   format, neighborhood, location_name, childcare, food, capacity,
@@ -20,7 +20,7 @@ interface LeaderRow {
   whatsapp: boolean;
 }
 
-interface StudyRow {
+export interface StudyRow {
   id: string;
   slug: string;
   title: string;
@@ -43,7 +43,7 @@ interface StudyRow {
   study_tags: { tags: Tag | null }[];
 }
 
-function fromRow(row: StudyRow): Study {
+export function fromRow(row: StudyRow): Study {
   return {
     id: row.id,
     slug: row.slug,
@@ -89,11 +89,7 @@ function seedToPublic(s: (typeof seedStudies)[number]): Study {
   void meetingUrl;
   return {
     ...rest,
-    leaders: leaderIds.map((id) => {
-      const { email, ...leader } = seedLeaders.find((l) => l.id === id)!;
-      void email;
-      return leader satisfies Leader;
-    }),
+    leaders: leaderIds.map((id) => seedLeaders.find((l) => l.id === id)!),
     tags: tagSlugs.map((slug) => seedTags.find((t) => t.slug === slug)!),
   };
 }

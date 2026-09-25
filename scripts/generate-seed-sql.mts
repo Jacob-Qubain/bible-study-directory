@@ -28,9 +28,9 @@ const sql = [
       name: l.name,
       photo_url: l.photoUrl,
       bio: l.bio,
-      email: l.email,
       public_phone: l.publicPhone,
       whatsapp: l.whatsapp,
+      approved: true,
     })),
     "(id)",
   ),
@@ -52,13 +52,16 @@ const sql = [
       format: s.format,
       neighborhood: s.neighborhood,
       location_name: s.locationName,
-      address: s.address,
-      meeting_url: s.meetingUrl,
       childcare: s.childcare,
       food: s.food,
       capacity: s.capacity,
     })),
     "(id)",
+  ),
+  // The insert trigger already created an empty study_private row per study.
+  ...seedStudies.map(
+    (s) =>
+      `update study_private set address = ${lit(s.address)}, meeting_url = ${lit(s.meetingUrl)} where study_id = ${lit(s.id)};\n`,
   ),
   insert(
     "study_leaders",
