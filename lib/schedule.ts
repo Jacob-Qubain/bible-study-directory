@@ -67,17 +67,21 @@ function parseTime(hhmm: string) {
   return { hour: h, minute: m };
 }
 
-/** Next start time strictly after `now` (a meeting in progress still counts until it ends). */
+/**
+ * Next start time strictly after `now` (a meeting in progress still counts
+ * until it ends), never before the study's first meeting.
+ */
 export function nextMeeting(study: Study, now: Date = new Date()): Date {
   const { hour, minute } = parseTime(study.startTime);
   const today = wallClock(now, study.timezone);
   // Day arithmetic on a UTC-midnight "calendar date" avoids timezone drift.
   const todayDate = Date.UTC(today.year, today.month - 1, today.day);
   const anchor = Date.parse(`${study.anchorDate}T00:00:00Z`);
+  const from = Math.max(todayDate, anchor);
 
-  let offset = (study.dayOfWeek - today.weekday + 7) % 7;
+  let offset = (study.dayOfWeek - new Date(from).getUTCDay() + 7) % 7;
   for (let attempts = 0; attempts < 4; attempts++, offset += 7) {
-    const date = todayDate + offset * DAY_MS;
+    const date = from + offset * DAY_MS;
     if (study.cadence === "biweekly") {
       const weeks = Math.round((date - anchor) / (7 * DAY_MS));
       if (((weeks % 2) + 2) % 2 !== 0) continue;
@@ -95,6 +99,32 @@ export function nextMeeting(study: Study, now: Date = new Date()): Date {
     if (end > now.getTime()) return start;
   }
   throw new Error(`Could not compute next meeting for ${study.slug}`);
+}
+
+function formatDate(isoDate: string, opts: Intl.DateTimeFormatOptions) {
+  return new Intl.DateTimeFormat("en-US", { timeZone: "UTC", ...opts }).format(
+    new Date(`${isoDate}T00:00:00Z`),
+  );
+}
+
+function localIsoDate(now: Date, timeZone: string) {
+  const w = wallClock(now, timeZone);
+  return `${w.year}-${String(w.month).padStart(2, "0")}-${String(w.day).padStart(2, "0")}`;
+}
+
+/** "Meeting since September 2, 2026" or, for a study that hasn't begun, "Starts Thursday, October 1". */
+export function startedLabel(study: Study, now: Date) {
+  if (study.anchorDate > localIsoDate(now, study.timezone)) {
+    return `Starts ${formatDate(study.anchorDate, { weekday: "long", month: "long", day: "numeric" })}`;
+  }
+  return `Meeting since ${formatDate(study.anchorDate, { month: "long", day: "numeric", year: "numeric" })}`;
+}
+
+/** Short "Oct 1" for cards when the first meeting is still ahead; otherwise null. */
+export function upcomingStart(study: Study, now: Date) {
+  return study.anchorDate > localIsoDate(now, study.timezone)
+    ? formatDate(study.anchorDate, { month: "short", day: "numeric" })
+    : null;
 }
 
 export function timeOfDay(startTime: string): TimeOfDay {

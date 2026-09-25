@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { requireLeader } from "@/lib/auth";
 import { getAllTags, getEditableStudy } from "@/lib/leader/queries";
 import { studyToFormValues } from "@/lib/leader/study-form";
-import { requestTime } from "@/lib/request-time";
 import { StudyForm } from "../study-form";
 import { DeleteStudyButton } from "./delete-button";
 
@@ -23,7 +22,7 @@ export default async function EditStudyPage(props: PageProps<"/leader/studies/[i
       <h1 className="font-display text-3xl font-semibold">Edit “{study.title}”</h1>
       <StudyForm
         studyId={study.id}
-        initial={studyToFormValues(study, study, new Date(requestTime()))}
+        initial={studyToFormValues(study, study)}
         tags={tags}
       />
       <div className="border-t border-line pt-6">

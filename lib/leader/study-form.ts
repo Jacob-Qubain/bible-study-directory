@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { nextMeeting, wallClock } from "../schedule";
 import { DEFAULT_TIMEZONE } from "../site";
 import type { FoodProvided, Study, StudyCadence, StudyFormat } from "../types";
 
@@ -9,7 +8,7 @@ export interface StudyFormValues {
   summary: string;
   description: string;
   curriculum: string;
-  date: string; // "YYYY-MM-DD", the next meeting — also sets the weekday and biweekly parity
+  date: string; // "YYYY-MM-DD", the first meeting — also sets the weekday and biweekly parity
   time: string; // "HH:MM"
   duration: string;
   cadence: StudyCadence;
@@ -85,7 +84,7 @@ const schema = z
     summary: z.string().trim().min(1, "One line helps people choose.").max(200, "Keep it to one line."),
     description: optional(4000),
     curriculum: optional(200),
-    date: z.iso.date("Pick the date of your next meeting."),
+    date: z.iso.date("Pick the date of your first meeting."),
     time: z.string().regex(/^\d{2}:\d{2}$/, "Pick a start time."),
     duration: z.coerce.number().int().min(5).max(720),
     cadence: z.enum(["weekly", "biweekly"]),
@@ -180,20 +179,16 @@ export function slugify(title: string) {
   );
 }
 
-/** Prefills the editor; the date field shows the next upcoming meeting. */
 export function studyToFormValues(
   study: Study,
   priv: { address: string | null; meetingUrl: string | null },
-  now: Date,
 ): StudyFormValues {
-  const next = wallClock(nextMeeting(study, now), study.timezone);
-  const pad = (n: number) => String(n).padStart(2, "0");
   return {
     title: study.title,
     summary: study.summary,
     description: study.description ?? "",
     curriculum: study.curriculum ?? "",
-    date: `${next.year}-${pad(next.month)}-${pad(next.day)}`,
+    date: study.anchorDate,
     time: study.startTime,
     duration: String(study.durationMinutes),
     cadence: study.cadence,

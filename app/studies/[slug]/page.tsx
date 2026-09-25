@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   BookOpen,
+  CalendarCheck,
   CalendarDays,
   CalendarPlus,
   Clock,
@@ -18,7 +19,7 @@ import { FormatBadge, Perks, locationLabel } from "@/components/study-badges";
 import { googleCalendarUrl } from "@/lib/calendar";
 import { getStudy } from "@/lib/data/studies";
 import { requestTime } from "@/lib/request-time";
-import { cadenceLabel, nextMeeting } from "@/lib/schedule";
+import { cadenceLabel, nextMeeting, startedLabel } from "@/lib/schedule";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import type { Leader, Study } from "@/lib/types";
 import { JoinForm } from "./join-form";
@@ -77,6 +78,7 @@ export default async function StudyPage(props: PageProps<"/studies/[slug]">) {
   const expectations = [
     { icon: Clock, label: `About ${durationLabel(study.durationMinutes)}` },
     { icon: CalendarDays, label: cadenceLabel(study) },
+    { icon: CalendarCheck, label: startedLabel(study, new Date(serverNow)) },
     study.curriculum && { icon: BookOpen, label: `Reading: ${study.curriculum}` },
     study.capacity && { icon: Users, label: `Room for about ${study.capacity}` },
   ].filter(Boolean) as { icon: typeof Clock; label: string }[];

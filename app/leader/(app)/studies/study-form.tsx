@@ -105,9 +105,9 @@ export function StudyForm({
         <div className="grid gap-5 sm:grid-cols-2">
           <Field
             id="date"
-            label="Next meeting"
+            label="First meeting"
             error={errors.date}
-            hint="Sets the weekday. We'll repeat it from there."
+            hint="When it started or will start. Sets the weekday; moving days? Pick the first meeting on the new day."
           >
             <input {...input("date", true)} type="date" defaultValue={values.date} required />
           </Field>

@@ -51,9 +51,9 @@ export function Directory({
 
         {results.length > 0 ? (
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {results.map(({ study, next }) => (
+            {results.map(({ study }) => (
               <li key={study.id}>
-                <StudyCard study={study} next={next} now={now} />
+                <StudyCard study={study} now={now} />
               </li>
             ))}
           </ul>
