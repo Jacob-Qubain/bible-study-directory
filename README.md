@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bible Study Directory
 
-## Getting Started
+Find a Bible study this week: no sign-up, no pressure. Browse, filter, and join a group in ten seconds.
 
-First, run the development server:
+See [docs/PLAN.md](docs/PLAN.md) for the architecture, data model, and roadmap.
+
+## Run it
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000. With no Supabase credentials (or an unreachable project) the app runs
+on the bundled seed data in `lib/data/seed-data.ts`, and join requests are logged instead of saved.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Connect Supabase
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Copy `.env.example` to `.env.local` and fill in your project URL and anon key.
+2. Apply the schema and sample data, either with the Supabase CLI:
 
-## Learn More
+   ```bash
+   supabase link --project-ref <ref>
+   supabase db push
+   psql "$DATABASE_URL" -f supabase/seed.sql
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+   or by pasting `supabase/migrations/*.sql` and then `supabase/seed.sql` into the SQL editor.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+After editing `lib/data/seed-data.ts`, regenerate the SQL with `npm run db:seed-sql`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Scripts
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Script               | What it does                            |
+| -------------------- | --------------------------------------- |
+| `npm run dev`        | Dev server                              |
+| `npm run build`      | Production build (includes type check)  |
+| `npm run lint`       | ESLint                                  |
+| `npm run typecheck`  | `tsc --noEmit`                          |
+| `npm run db:seed-sql`| Regenerate `supabase/seed.sql`          |
