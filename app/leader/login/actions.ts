@@ -18,7 +18,11 @@ export async function sendMagicLink(_prev: LoginState, formData: FormData): Prom
     return { status: "error", message: "That doesn't look like an email address.", email };
   }
 
-  const origin = (await headers()).get("origin") ?? SITE_URL;
+  // Production always uses the canonical site URL, which must be on Supabase's
+  // redirect allow-list; otherwise Supabase silently falls back to the home page.
+  // Dev uses the request origin so localhost links stay local.
+  const origin =
+    process.env.NODE_ENV === "production" ? SITE_URL : ((await headers()).get("origin") ?? SITE_URL);
   const next = safeNext(formData.get("next"));
   const supabase = await createSupabaseServer();
   const { error } = await supabase.auth.signInWithOtp({
