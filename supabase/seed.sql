@@ -5,14 +5,12 @@ insert into campuses (id, slug, name, city, timezone) values
 on conflict (id) do nothing;
 
 insert into tags (slug, label, category) values
-  ('college', 'College', 'audience'),
-  ('young-adults', 'Young adults', 'audience'),
+  ('freshmen', 'Freshmen', 'audience'),
+  ('upperclassmen', 'Upperclassmen', 'audience'),
+  ('grad-students', 'Grad students', 'audience'),
   ('men', 'Men', 'audience'),
   ('women', 'Women', 'audience'),
   ('co-ed', 'Everyone', 'audience'),
-  ('couples', 'Couples', 'audience'),
-  ('parents', 'Parents', 'audience'),
-  ('seniors', 'Seniors', 'audience'),
   ('book-study', 'Book of the Bible', 'topic'),
   ('topical', 'Topical', 'topic'),
   ('prayer', 'Prayer', 'topic'),
@@ -73,15 +71,15 @@ insert into study_leaders (study_id, leader_id, role, sort_order) values
 on conflict (study_id, leader_id) do nothing;
 
 insert into study_tags (study_id, tag_id)
-  select '5a7d0c2e-2222-4b00-8000-000000000001', id from tags where slug in ('co-ed', 'parents', 'book-study')
+  select '5a7d0c2e-2222-4b00-8000-000000000001', id from tags where slug in ('co-ed', 'book-study')
 on conflict do nothing;
 
 insert into study_tags (study_id, tag_id)
-  select '5a7d0c2e-2222-4b00-8000-000000000002', id from tags where slug in ('college', 'topical', 'new-to-faith')
+  select '5a7d0c2e-2222-4b00-8000-000000000002', id from tags where slug in ('freshmen', 'topical', 'new-to-faith')
 on conflict do nothing;
 
 insert into study_tags (study_id, tag_id)
-  select '5a7d0c2e-2222-4b00-8000-000000000003', id from tags where slug in ('co-ed', 'young-adults', 'prayer')
+  select '5a7d0c2e-2222-4b00-8000-000000000003', id from tags where slug in ('co-ed', 'upperclassmen', 'prayer')
 on conflict do nothing;
 
 insert into study_tags (study_id, tag_id)
@@ -89,19 +87,19 @@ insert into study_tags (study_id, tag_id)
 on conflict do nothing;
 
 insert into study_tags (study_id, tag_id)
-  select '5a7d0c2e-2222-4b00-8000-000000000005', id from tags where slug in ('women', 'parents', 'book-study')
+  select '5a7d0c2e-2222-4b00-8000-000000000005', id from tags where slug in ('women', 'book-study')
 on conflict do nothing;
 
 insert into study_tags (study_id, tag_id)
-  select '5a7d0c2e-2222-4b00-8000-000000000006', id from tags where slug in ('young-adults', 'co-ed', 'book-study')
+  select '5a7d0c2e-2222-4b00-8000-000000000006', id from tags where slug in ('upperclassmen', 'co-ed', 'book-study')
 on conflict do nothing;
 
 insert into study_tags (study_id, tag_id)
-  select '5a7d0c2e-2222-4b00-8000-000000000007', id from tags where slug in ('seniors', 'co-ed', 'book-study')
+  select '5a7d0c2e-2222-4b00-8000-000000000007', id from tags where slug in ('grad-students', 'co-ed', 'book-study')
 on conflict do nothing;
 
 insert into study_tags (study_id, tag_id)
-  select '5a7d0c2e-2222-4b00-8000-000000000008', id from tags where slug in ('couples', 'topical')
+  select '5a7d0c2e-2222-4b00-8000-000000000008', id from tags where slug in ('topical')
 on conflict do nothing;
 
 insert into study_tags (study_id, tag_id)

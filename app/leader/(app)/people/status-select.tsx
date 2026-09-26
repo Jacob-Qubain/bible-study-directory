@@ -1,14 +1,9 @@
 "use client";
 
 import { updateInquiryStatus } from "./actions";
+import { STATUS_LABELS } from "@/lib/leader/inquiry-status";
 import type { Inquiry } from "@/lib/leader/queries";
 
-export const STATUS_LABELS: Record<Inquiry["status"], string> = {
-  new: "New",
-  contacted: "Reached out",
-  joined: "Joined",
-  declined: "Not a fit",
-};
 
 /** Saves as soon as the leader picks a new status. */
 export function StatusSelect({ inquiry }: { inquiry: Inquiry }) {

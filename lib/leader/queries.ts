@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fromRow, STUDY_COLUMNS, type StudyRow } from "../data/studies";
 import type { Study, Tag } from "../types";
+import type { InquiryStatus } from "./inquiry-status";
 
 export type StudyStatus = "active" | "paused" | "archived";
 
@@ -77,7 +78,7 @@ export interface Inquiry {
   email: string | null;
   phone: string | null;
   message: string | null;
-  status: "new" | "contacted" | "joined" | "declined";
+  status: InquiryStatus;
   createdAt: string;
 }
 

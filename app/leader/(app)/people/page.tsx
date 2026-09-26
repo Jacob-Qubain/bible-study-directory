@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Mail, MessageSquareText, Phone } from "lucide-react";
+import { Contact, FileSpreadsheet, Mail, MessageSquareText, Phone } from "lucide-react";
 import { buttonClass } from "@/components/ui/field";
 import { requireLeader } from "@/lib/auth";
 import { getInquiries, getMyStudies } from "@/lib/leader/queries";
@@ -30,17 +30,34 @@ export default async function PeoplePage(props: PageProps<"/leader/people">) {
   );
   const titles = new Map(studies.map((s) => [s.id, s.title]));
   const now = requestTime();
+  const exportable = inquiries.filter((q) => q.status !== "declined").length;
+  const studyQuery = selected ? `&study=${selected.id}` : "";
 
   const tab = (active: boolean) =>
     `${buttonClass.secondary} ${active ? "border-accent bg-accent text-accent-ink hover:bg-accent" : ""}`;
 
   return (
     <div className="grid gap-6">
-      <header className="grid gap-1">
-        <h1 className="font-display text-3xl font-semibold">People who want to come</h1>
-        <p className="text-muted">
-          A quick hello goes a long way. Most people decide in the first day.
-        </p>
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div className="grid gap-1">
+          <h1 className="font-display text-3xl font-semibold">People who want to come</h1>
+          <p className="text-muted">
+            A quick hello goes a long way. Most people decide in the first day.
+          </p>
+        </div>
+        {exportable > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {/* Plain links: these download files, so skip client-side navigation. */}
+            <a href={`/leader/people/export?format=vcf${studyQuery}`} className={buttonClass.secondary} download>
+              <Contact className="size-4 text-accent" aria-hidden />
+              Save to phone contacts
+            </a>
+            <a href={`/leader/people/export?format=csv${studyQuery}`} className={buttonClass.secondary} download>
+              <FileSpreadsheet className="size-4 text-accent" aria-hidden />
+              Spreadsheet
+            </a>
+          </div>
+        )}
       </header>
 
       {studies.length > 1 && (

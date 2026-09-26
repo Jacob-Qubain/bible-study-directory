@@ -14,14 +14,12 @@ export const seedCampuses: Campus[] = [
 ];
 
 export const seedTags: Tag[] = [
-  { slug: "college", label: "College", category: "audience" },
-  { slug: "young-adults", label: "Young adults", category: "audience" },
+  { slug: "freshmen", label: "Freshmen", category: "audience" },
+  { slug: "upperclassmen", label: "Upperclassmen", category: "audience" },
+  { slug: "grad-students", label: "Grad students", category: "audience" },
   { slug: "men", label: "Men", category: "audience" },
   { slug: "women", label: "Women", category: "audience" },
   { slug: "co-ed", label: "Everyone", category: "audience" },
-  { slug: "couples", label: "Couples", category: "audience" },
-  { slug: "parents", label: "Parents", category: "audience" },
-  { slug: "seniors", label: "Seniors", category: "audience" },
   { slug: "book-study", label: "Book of the Bible", category: "topic" },
   { slug: "topical", label: "Topical", category: "topic" },
   { slug: "prayer", label: "Prayer", category: "topic" },
@@ -114,7 +112,7 @@ export const seedStudies: SeedStudy[] = [
     address: "4108 Pecan Grove Ln, Eastwood",
     meetingUrl: null,
     leaderIds: ["0b1f3c1e-1111-4a00-8000-000000000001"],
-    tagSlugs: ["co-ed", "parents", "book-study"],
+    tagSlugs: ["co-ed", "book-study"],
   },
   {
     id: "5a7d0c2e-2222-4b00-8000-000000000002",
@@ -139,7 +137,7 @@ export const seedStudies: SeedStudy[] = [
     address: "Student Union Room 214, 2308 Whitis Ave",
     meetingUrl: null,
     leaderIds: ["0b1f3c1e-1111-4a00-8000-000000000002"],
-    tagSlugs: ["college", "topical", "new-to-faith"],
+    tagSlugs: ["freshmen", "topical", "new-to-faith"],
   },
   {
     id: "5a7d0c2e-2222-4b00-8000-000000000003",
@@ -164,7 +162,7 @@ export const seedStudies: SeedStudy[] = [
     address: null,
     meetingUrl: "https://zoom.us/j/0000000000",
     leaderIds: ["0b1f3c1e-1111-4a00-8000-000000000003"],
-    tagSlugs: ["co-ed", "young-adults", "prayer"],
+    tagSlugs: ["co-ed", "upperclassmen", "prayer"],
   },
   {
     id: "5a7d0c2e-2222-4b00-8000-000000000004",
@@ -214,7 +212,7 @@ export const seedStudies: SeedStudy[] = [
     address: "1200 Riverside Dr",
     meetingUrl: "https://meet.google.com/aaa-bbbb-ccc",
     leaderIds: ["0b1f3c1e-1111-4a00-8000-000000000007"],
-    tagSlugs: ["women", "parents", "book-study"],
+    tagSlugs: ["women", "book-study"],
   },
   {
     id: "5a7d0c2e-2222-4b00-8000-000000000006",
@@ -239,7 +237,7 @@ export const seedStudies: SeedStudy[] = [
     address: "300 Congress Ave, Apt 1204",
     meetingUrl: null,
     leaderIds: ["0b1f3c1e-1111-4a00-8000-000000000007"],
-    tagSlugs: ["young-adults", "co-ed", "book-study"],
+    tagSlugs: ["upperclassmen", "co-ed", "book-study"],
   },
   {
     id: "5a7d0c2e-2222-4b00-8000-000000000007",
@@ -267,7 +265,7 @@ export const seedStudies: SeedStudy[] = [
       "0b1f3c1e-1111-4a00-8000-000000000004",
       "0b1f3c1e-1111-4a00-8000-000000000005",
     ],
-    tagSlugs: ["seniors", "co-ed", "book-study"],
+    tagSlugs: ["grad-students", "co-ed", "book-study"],
   },
   {
     id: "5a7d0c2e-2222-4b00-8000-000000000008",
@@ -292,7 +290,7 @@ export const seedStudies: SeedStudy[] = [
     address: "Sent by text each week",
     meetingUrl: null,
     leaderIds: ["0b1f3c1e-1111-4a00-8000-000000000001"],
-    tagSlugs: ["couples", "topical"],
+    tagSlugs: ["topical"],
   },
   {
     id: "5a7d0c2e-2222-4b00-8000-000000000009",

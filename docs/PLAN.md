@@ -108,6 +108,11 @@ area, text search), soonest-first cards, detail page, one-step join, Google/ICS 
 - `/<campus>` is that campus's directory, shareable on its own. Leaders pick a campus per study;
   admins add campuses in `/leader/admin`. Childcare option removed.
 
+**Phase 2d: Launch polish ✅**
+- People page exports contacts: `.vcf` (add everyone to a phone at once) and `.csv`.
+- Campus-life audience tags (Freshmen, Upperclassmen, Grad students, Men, Women, Everyone).
+- Footer feedback link (Google Form) and Vercel Web Analytics.
+
 **Phase 3: Reach**
 - PWA manifest + offline shell; "near me" sort (store lat/lng, PostGIS `earth_distance`).
 - Open Graph images per study for sharing; JSON-LD `Event` markup.
