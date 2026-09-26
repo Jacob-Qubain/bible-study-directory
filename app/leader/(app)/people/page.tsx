@@ -6,6 +6,7 @@ import { requireLeader } from "@/lib/auth";
 import { getInquiries, getMyStudies } from "@/lib/leader/queries";
 import { formatPhone } from "@/lib/phone";
 import { requestTime } from "@/lib/request-time";
+import { CopyNumbers } from "./copy-numbers";
 import { StatusSelect } from "./status-select";
 
 export const metadata: Metadata = { title: "People" };
@@ -30,7 +31,9 @@ export default async function PeoplePage(props: PageProps<"/leader/people">) {
   );
   const titles = new Map(studies.map((s) => [s.id, s.title]));
   const now = requestTime();
-  const exportable = inquiries.filter((q) => q.status !== "declined").length;
+  const active = inquiries.filter((q) => q.status !== "declined");
+  const exportable = active.length;
+  const phones = [...new Set(active.flatMap((q) => (q.phone ? [q.phone] : [])))];
   const studyQuery = selected ? `&study=${selected.id}` : "";
 
   const tab = (active: boolean) =>
@@ -47,6 +50,7 @@ export default async function PeoplePage(props: PageProps<"/leader/people">) {
         </div>
         {exportable > 0 && (
           <div className="flex flex-wrap gap-2">
+            {phones.length > 0 && <CopyNumbers phones={phones} />}
             {/* Plain links: these download files, so skip client-side navigation. */}
             <a href={`/leader/people/export?format=vcf${studyQuery}`} className={buttonClass.secondary} download>
               <Contact className="size-4 text-accent" aria-hidden />
