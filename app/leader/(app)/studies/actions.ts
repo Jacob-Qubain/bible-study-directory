@@ -41,7 +41,20 @@ export async function saveStudy(
     };
   };
 
-  const row = toStudyRow(parsed.data);
+  const { data: campus } = await supabase
+    .from("campuses")
+    .select("timezone")
+    .eq("id", parsed.data.campusId)
+    .maybeSingle();
+  if (!campus) {
+    return {
+      status: "error",
+      message: "A few things need a look.",
+      fields: { campusId: "Pick your campus." },
+      values,
+    };
+  }
+  const row = toStudyRow(parsed.data, campus.timezone);
   let id = studyId;
 
   if (id) {

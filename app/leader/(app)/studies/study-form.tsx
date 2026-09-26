@@ -6,19 +6,10 @@ import { Lock } from "lucide-react";
 import { buttonClass, describedBy, Field, inputClass, Notice } from "@/components/ui/field";
 import { FORMAT_LABELS } from "@/components/study-badges";
 import type { StudyFormValues } from "@/lib/leader/study-form";
-import type { StudyFormat, Tag } from "@/lib/types";
+import type { Campus, StudyFormat, Tag } from "@/lib/types";
 import { saveStudy, type StudyFormState } from "./actions";
 
 const DURATIONS = [30, 45, 60, 75, 90, 120, 150, 180];
-const TIMEZONES = [
-  ["America/New_York", "Eastern"],
-  ["America/Chicago", "Central"],
-  ["America/Denver", "Mountain"],
-  ["America/Phoenix", "Arizona"],
-  ["America/Los_Angeles", "Pacific"],
-  ["America/Anchorage", "Alaska"],
-  ["Pacific/Honolulu", "Hawaii"],
-];
 
 function durationLabel(m: number) {
   return m < 60 ? `${m} min` : `${m / 60} hr${m > 60 ? "s" : ""}`.replace(".5", "½");
@@ -44,10 +35,12 @@ export function StudyForm({
   studyId,
   initial,
   tags,
+  campuses,
 }: {
   studyId: string | null;
   initial: StudyFormValues;
   tags: Tag[];
+  campuses: Campus[];
 }) {
   const [state, action, pending] = useActionState<StudyFormState, FormData>(
     saveStudy.bind(null, studyId),
@@ -61,9 +54,6 @@ export function StudyForm({
     ...describedBy(id, errors[id], hint),
     className: inputClass,
   });
-  const timezones = TIMEZONES.some(([tz]) => tz === values.timezone)
-    ? TIMEZONES
-    : [...TIMEZONES, [values.timezone, values.timezone]];
 
   return (
     <form action={action} className="grid gap-6" noValidate>
@@ -129,19 +119,26 @@ export function StudyForm({
               ))}
             </select>
           </Field>
-          <Field id="timezone" label="Timezone" error={errors.timezone}>
-            <select {...input("timezone")} defaultValue={values.timezone}>
-              {timezones.map(([tz, label]) => (
-                <option key={tz} value={tz}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </Field>
         </div>
       </Section>
 
       <Section title="Where">
+        <Field
+          id="campusId"
+          label="Campus"
+          error={errors.campusId}
+          hint="Your study is listed on this campus's page. Don't see yours? Ask an admin to add it."
+        >
+          <select {...input("campusId", true)} defaultValue={values.campusId} required>
+            {!values.campusId && <option value="">Choose a campus…</option>}
+            {campuses.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+
         <div role="radiogroup" aria-label="Format" className="flex flex-wrap gap-2">
           {(Object.entries(FORMAT_LABELS) as [StudyFormat, string][]).map(([value, label]) => (
             <label
@@ -218,15 +215,6 @@ export function StudyForm({
       </Section>
 
       <Section title="Hospitality">
-        <label className="flex items-center gap-3 text-sm">
-          <input
-            type="checkbox"
-            name="childcare"
-            defaultChecked={values.childcare}
-            className="size-5 accent-[var(--accent)]"
-          />
-          Childcare provided
-        </label>
         <div className="grid gap-5 sm:grid-cols-2">
           <Field id="food" label="Food" error={errors.food}>
             <select {...input("food")} defaultValue={values.food}>

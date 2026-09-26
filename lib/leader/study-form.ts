@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DEFAULT_TIMEZONE } from "../site";
+export { slugify } from "../slugify";
 import type { FoodProvided, Study, StudyCadence, StudyFormat } from "../types";
 
 /** Everything the study editor submits, as strings/booleans straight from the form. */
@@ -8,17 +8,16 @@ export interface StudyFormValues {
   summary: string;
   description: string;
   curriculum: string;
+  campusId: string;
   date: string; // "YYYY-MM-DD", the first meeting — also sets the weekday and biweekly parity
   time: string; // "HH:MM"
   duration: string;
   cadence: StudyCadence;
-  timezone: string;
   format: StudyFormat;
   locationName: string;
   neighborhood: string;
   address: string;
   meetingUrl: string;
-  childcare: boolean;
   food: FoodProvided;
   capacity: string;
   tags: string[];
@@ -31,17 +30,16 @@ export const EMPTY_STUDY: StudyFormValues = {
   summary: "",
   description: "",
   curriculum: "",
+  campusId: "",
   date: "",
   time: "19:00",
   duration: "90",
   cadence: "weekly",
-  timezone: DEFAULT_TIMEZONE,
   format: "in_person",
   locationName: "",
   neighborhood: "",
   address: "",
   meetingUrl: "",
-  childcare: false,
   food: "none",
   capacity: "",
   tags: [],
@@ -54,17 +52,16 @@ export function readStudyForm(formData: FormData): StudyFormValues {
     summary: s("summary"),
     description: s("description"),
     curriculum: s("curriculum"),
+    campusId: s("campusId"),
     date: s("date"),
     time: s("time"),
     duration: s("duration"),
     cadence: s("cadence") as StudyCadence,
-    timezone: s("timezone"),
     format: s("format") as StudyFormat,
     locationName: s("locationName"),
     neighborhood: s("neighborhood"),
     address: s("address"),
     meetingUrl: s("meetingUrl"),
-    childcare: formData.get("childcare") === "on",
     food: s("food") as FoodProvided,
     capacity: s("capacity"),
     tags: formData.getAll("tags").map(String),
@@ -84,18 +81,11 @@ const schema = z
     summary: z.string().trim().min(1, "One line helps people choose.").max(200, "Keep it to one line."),
     description: optional(4000),
     curriculum: optional(200),
+    campusId: z.uuid("Pick your campus."),
     date: z.iso.date("Pick the date of your first meeting."),
     time: z.string().regex(/^\d{2}:\d{2}$/, "Pick a start time."),
     duration: z.coerce.number().int().min(5).max(720),
     cadence: z.enum(["weekly", "biweekly"]),
-    timezone: z.string().refine((tz) => {
-      try {
-        new Intl.DateTimeFormat("en-US", { timeZone: tz });
-        return true;
-      } catch {
-        return false;
-      }
-    }, "Pick a timezone."),
     format: z.enum(["in_person", "online", "hybrid"]),
     locationName: optional(120),
     neighborhood: optional(80),
@@ -105,7 +95,6 @@ const schema = z
       .trim()
       .transform((v) => v || null)
       .pipe(z.url({ protocol: /^https?$/, error: "Paste the full link, starting with https://" }).nullable()),
-    childcare: z.boolean(),
     food: z.enum(["none", "snacks", "meal"]),
     capacity: z
       .string()
@@ -145,9 +134,13 @@ export function parseStudyForm(values: StudyFormValues):
   return { ok: false, fields };
 }
 
-/** Columns for bible_studies (public) — private details are saved separately. */
-export function toStudyRow(d: ParsedStudy) {
+/**
+ * Columns for bible_studies (public); private details are saved separately.
+ * The timezone comes from the campus, so leaders never pick one.
+ */
+export function toStudyRow(d: ParsedStudy, campusTimezone: string) {
   return {
+    campus_id: d.campusId,
     title: d.title,
     summary: d.summary,
     description: d.description,
@@ -155,29 +148,17 @@ export function toStudyRow(d: ParsedStudy) {
     day_of_week: new Date(`${d.date}T00:00:00Z`).getUTCDay(),
     start_time: d.time,
     duration_minutes: d.duration,
-    timezone: d.timezone,
+    timezone: campusTimezone,
     cadence: d.cadence,
     anchor_date: d.date,
     format: d.format,
     location_name: d.locationName,
     neighborhood: d.neighborhood,
-    childcare: d.childcare,
     food: d.food,
     capacity: d.capacity,
   };
 }
 
-export function slugify(title: string) {
-  return (
-    title
-      .toLowerCase()
-      .normalize("NFKD")
-      .replace(/[̀-ͯ]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 60) || "study"
-  );
-}
 
 export function studyToFormValues(
   study: Study,
@@ -188,17 +169,16 @@ export function studyToFormValues(
     summary: study.summary,
     description: study.description ?? "",
     curriculum: study.curriculum ?? "",
+    campusId: study.campus.id,
     date: study.anchorDate,
     time: study.startTime,
     duration: String(study.durationMinutes),
     cadence: study.cadence,
-    timezone: study.timezone,
     format: study.format,
     locationName: study.locationName ?? "",
     neighborhood: study.neighborhood ?? "",
     address: priv.address ?? "",
     meetingUrl: priv.meetingUrl ?? "",
-    childcare: study.childcare,
     food: study.food,
     capacity: study.capacity ? String(study.capacity) : "",
     tags: study.tags.map((t) => t.slug),

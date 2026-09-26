@@ -1,7 +1,17 @@
 // Sample directory content. Used as the local data source when Supabase isn't
 // configured, and compiled to supabase/seed.sql by `npm run db:seed-sql`.
 // Keep this file free of runtime imports so Node can run the generator directly.
-import type { Leader, PrivateMeetingDetails, Study, Tag } from "../types";
+import type { Campus, Leader, PrivateMeetingDetails, Study, Tag } from "../types";
+
+export const seedCampuses: Campus[] = [
+  {
+    id: "c0000000-0000-4000-8000-000000000001",
+    slug: "demo",
+    name: "Demo University",
+    city: "Sample data",
+    timezone: "America/Chicago",
+  },
+];
 
 export const seedTags: Tag[] = [
   { slug: "college", label: "College", category: "audience" },
@@ -77,12 +87,13 @@ export const seedLeaders: Leader[] = [
   },
 ];
 
-type SeedStudy = Omit<Study, "leaders" | "tags"> &
-  PrivateMeetingDetails & { leaderIds: string[]; tagSlugs: string[] };
+type SeedStudy = Omit<Study, "leaders" | "tags" | "campus"> &
+  PrivateMeetingDetails & { campusId: string; leaderIds: string[]; tagSlugs: string[] };
 
 export const seedStudies: SeedStudy[] = [
   {
     id: "5a7d0c2e-2222-4b00-8000-000000000001",
+    campusId: "c0000000-0000-4000-8000-000000000001",
     slug: "tuesday-night-in-mark",
     title: "Tuesday Night in Mark",
     summary: "A relaxed walk through Mark's Gospel over a home-cooked dinner.",
@@ -98,7 +109,6 @@ export const seedStudies: SeedStudy[] = [
     format: "in_person",
     neighborhood: "Eastwood",
     locationName: "The Delgado home",
-    childcare: true,
     food: "meal",
     capacity: 16,
     address: "4108 Pecan Grove Ln, Eastwood",
@@ -108,6 +118,7 @@ export const seedStudies: SeedStudy[] = [
   },
   {
     id: "5a7d0c2e-2222-4b00-8000-000000000002",
+    campusId: "c0000000-0000-4000-8000-000000000001",
     slug: "campus-questions",
     title: "Campus Questions",
     summary: "Skeptics welcome. Big questions, honest conversation, free pizza.",
@@ -123,7 +134,6 @@ export const seedStudies: SeedStudy[] = [
     format: "in_person",
     neighborhood: "University District",
     locationName: "Student Union, Room 214",
-    childcare: false,
     food: "meal",
     capacity: null,
     address: "Student Union Room 214, 2308 Whitis Ave",
@@ -133,6 +143,7 @@ export const seedStudies: SeedStudy[] = [
   },
   {
     id: "5a7d0c2e-2222-4b00-8000-000000000003",
+    campusId: "c0000000-0000-4000-8000-000000000001",
     slug: "sunrise-psalms",
     title: "Sunrise Psalms",
     summary: "Thirty minutes in the Psalms before work. Cameras optional.",
@@ -148,7 +159,6 @@ export const seedStudies: SeedStudy[] = [
     format: "online",
     neighborhood: null,
     locationName: "Zoom",
-    childcare: false,
     food: "none",
     capacity: null,
     address: null,
@@ -158,6 +168,7 @@ export const seedStudies: SeedStudy[] = [
   },
   {
     id: "5a7d0c2e-2222-4b00-8000-000000000004",
+    campusId: "c0000000-0000-4000-8000-000000000001",
     slug: "saturday-mens-breakfast",
     title: "Saturday Men's Breakfast",
     summary: "Eggs, coffee, and James — the most practical book in the Bible.",
@@ -173,7 +184,6 @@ export const seedStudies: SeedStudy[] = [
     format: "in_person",
     neighborhood: "Northside",
     locationName: "Blue Door Diner (back room)",
-    childcare: false,
     food: "meal",
     capacity: 24,
     address: "911 N Lamar Blvd",
@@ -183,11 +193,12 @@ export const seedStudies: SeedStudy[] = [
   },
   {
     id: "5a7d0c2e-2222-4b00-8000-000000000005",
+    campusId: "c0000000-0000-4000-8000-000000000001",
     slug: "women-of-the-word",
     title: "Women of the Word",
-    summary: "Women reading Ruth together. Childcare in the next room.",
+    summary: "Women reading Ruth together, with coffee and plenty of grace.",
     description:
-      "A warm, mixed-age group of women. We read a chapter aloud, talk through three questions, and share prayer requests. Childcare is provided by trusted volunteers just down the hall.",
+      "A warm, mixed-age group of women. We read a chapter aloud, talk through three questions, and share prayer requests.",
     curriculum: "Ruth",
     dayOfWeek: 3,
     startTime: "09:30",
@@ -198,7 +209,6 @@ export const seedStudies: SeedStudy[] = [
     format: "hybrid",
     neighborhood: "Riverside",
     locationName: "Riverside Community Church, Fellowship Hall",
-    childcare: true,
     food: "snacks",
     capacity: 20,
     address: "1200 Riverside Dr",
@@ -208,6 +218,7 @@ export const seedStudies: SeedStudy[] = [
   },
   {
     id: "5a7d0c2e-2222-4b00-8000-000000000006",
+    campusId: "c0000000-0000-4000-8000-000000000001",
     slug: "twenty-somethings",
     title: "Twenty-Somethings",
     summary: "New in town? Start here. Young adults, board games after.",
@@ -223,7 +234,6 @@ export const seedStudies: SeedStudy[] = [
     format: "in_person",
     neighborhood: "Downtown",
     locationName: "Hannah's apartment",
-    childcare: false,
     food: "snacks",
     capacity: 14,
     address: "300 Congress Ave, Apt 1204",
@@ -233,6 +243,7 @@ export const seedStudies: SeedStudy[] = [
   },
   {
     id: "5a7d0c2e-2222-4b00-8000-000000000007",
+    campusId: "c0000000-0000-4000-8000-000000000001",
     slug: "golden-years-genesis",
     title: "Golden Years in Genesis",
     summary: "Unhurried afternoon study for retirees. Pie every week.",
@@ -248,7 +259,6 @@ export const seedStudies: SeedStudy[] = [
     format: "in_person",
     neighborhood: "Northside",
     locationName: "The Becker home",
-    childcare: false,
     food: "snacks",
     capacity: 12,
     address: "7702 Shoal Creek Blvd",
@@ -261,6 +271,7 @@ export const seedStudies: SeedStudy[] = [
   },
   {
     id: "5a7d0c2e-2222-4b00-8000-000000000008",
+    campusId: "c0000000-0000-4000-8000-000000000001",
     slug: "couples-on-mission",
     title: "Couples on Mission",
     summary: "Married or engaged? Dinner, date-night energy, and Ephesians.",
@@ -276,7 +287,6 @@ export const seedStudies: SeedStudy[] = [
     format: "in_person",
     neighborhood: "Eastwood",
     locationName: "Rotating homes",
-    childcare: true,
     food: "meal",
     capacity: 10,
     address: "Sent by text each week",
@@ -286,6 +296,7 @@ export const seedStudies: SeedStudy[] = [
   },
   {
     id: "5a7d0c2e-2222-4b00-8000-000000000009",
+    campusId: "c0000000-0000-4000-8000-000000000001",
     slug: "lunch-break-prayer",
     title: "Lunch-Break Prayer",
     summary: "Twenty-five minutes of Scripture and prayer from your desk.",
@@ -301,7 +312,6 @@ export const seedStudies: SeedStudy[] = [
     format: "online",
     neighborhood: null,
     locationName: "Google Meet",
-    childcare: false,
     food: "none",
     capacity: null,
     address: null,

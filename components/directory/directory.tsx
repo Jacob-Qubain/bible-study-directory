@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { SearchX } from "lucide-react";
 import { FilterBar } from "./filter-bar";
 import { StudyCard } from "./study-card";
@@ -57,13 +58,24 @@ export function Directory({
               </li>
             ))}
           </ul>
+        ) : studies.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line px-6 py-14 text-center">
+            <p className="font-display text-lg font-semibold">No studies listed here yet.</p>
+            <p className="max-w-sm text-muted">Leading one? It takes about two minutes to list it.</p>
+            <Link
+              href="/leader"
+              className="mt-2 inline-flex min-h-11 items-center rounded-full bg-accent px-5 font-semibold text-accent-ink hover:bg-accent-hover"
+            >
+              List a study
+            </Link>
+          </div>
         ) : (
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line px-6 py-14 text-center">
             <SearchX className="size-8 text-muted" aria-hidden />
             <p className="font-display text-lg font-semibold">No studies match all of those.</p>
             <p className="max-w-sm text-muted">
-              Try removing a filter or two — there are {studies.length} groups meeting every
-              week.
+              Try removing a filter or two — there {studies.length === 1 ? "is 1 group" : `are ${studies.length} groups`}{" "}
+              meeting every week.
             </p>
             <button
               type="button"

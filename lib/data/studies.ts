@@ -1,12 +1,13 @@
 import { getSupabase } from "../supabase/public";
-import type { PrivateMeetingDetails, Study, Tag } from "../types";
-import { seedLeaders, seedStudies, seedTags } from "./seed-data";
+import type { Campus, PrivateMeetingDetails, Study, Tag } from "../types";
+import { seedCampuses, seedLeaders, seedStudies, seedTags } from "./seed-data";
 
 // Public columns; private address / meeting link live in study_private.
 export const STUDY_COLUMNS = `
   id, slug, title, summary, description, curriculum,
   day_of_week, start_time, duration_minutes, timezone, cadence, anchor_date,
-  format, neighborhood, location_name, childcare, food, capacity,
+  format, neighborhood, location_name, food, capacity,
+  campuses ( id, slug, name ),
   study_leaders ( sort_order, leaders ( id, name, photo_url, bio, public_phone, whatsapp ) ),
   study_tags ( tags ( slug, label, category ) )
 `;
@@ -36,11 +37,11 @@ export interface StudyRow {
   format: Study["format"];
   neighborhood: string | null;
   location_name: string | null;
-  childcare: boolean;
   food: Study["food"];
   capacity: number | null;
   study_leaders: { sort_order: number; leaders: LeaderRow | null }[];
   study_tags: { tags: Tag | null }[];
+  campuses: Study["campus"];
 }
 
 export function fromRow(row: StudyRow): Study {
@@ -60,9 +61,9 @@ export function fromRow(row: StudyRow): Study {
     format: row.format,
     neighborhood: row.neighborhood,
     locationName: row.location_name,
-    childcare: row.childcare,
     food: row.food,
     capacity: row.capacity,
+    campus: row.campuses,
     leaders: row.study_leaders
       .toSorted((a, b) => a.sort_order - b.sort_order)
       .flatMap(({ leaders: l }) =>
@@ -84,11 +85,13 @@ export function fromRow(row: StudyRow): Study {
 }
 
 function seedToPublic(s: (typeof seedStudies)[number]): Study {
-  const { address, meetingUrl, leaderIds, tagSlugs, ...rest } = s;
+  const { address, meetingUrl, campusId, leaderIds, tagSlugs, ...rest } = s;
   void address;
   void meetingUrl;
+  const { id, slug, name } = seedCampuses.find((c) => c.id === campusId)!;
   return {
     ...rest,
+    campus: { id, slug, name },
     leaders: leaderIds.map((id) => seedLeaders.find((l) => l.id === id)!),
     tags: tagSlugs.map((slug) => seedTags.find((t) => t.slug === slug)!),
   };
@@ -124,24 +127,75 @@ async function withFallback<T>(label: string, query: () => Promise<T>, seed: () 
   }
 }
 
-export async function getStudies(): Promise<Study[]> {
+/** Listed studies, optionally for one campus. */
+export async function getStudies(campusId?: string): Promise<Study[]> {
   return withFallback(
     "getStudies",
     async () => {
-      const { data, error } = await getSupabase()!
-        .from("bible_studies")
-        .select(STUDY_COLUMNS)
-        .eq("status", "active")
-        .order("day_of_week")
-        .order("start_time");
+      let query = getSupabase()!.from("bible_studies").select(STUDY_COLUMNS).eq("status", "active");
+      if (campusId) query = query.eq("campus_id", campusId);
+      const { data, error } = await query.order("day_of_week").order("start_time");
       if (error) raise(error);
       return (data as unknown as StudyRow[]).map(fromRow);
     },
     () =>
       seedStudies
+        .filter((s) => !campusId || s.campusId === campusId)
         .map(seedToPublic)
         .toSorted((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime)),
   );
+}
+
+const CAMPUS_COLUMNS = "id, slug, name, city, timezone";
+
+export async function getCampuses(): Promise<Campus[]> {
+  return withFallback(
+    "getCampuses",
+    async () => {
+      const { data, error } = await getSupabase()!.from("campuses").select(CAMPUS_COLUMNS).order("name");
+      if (error) raise(error);
+      return data as Campus[];
+    },
+    () => seedCampuses,
+  );
+}
+
+export async function getCampus(slug: string): Promise<Campus | null> {
+  return withFallback(
+    "getCampus",
+    async () => {
+      const { data, error } = await getSupabase()!
+        .from("campuses")
+        .select(CAMPUS_COLUMNS)
+        .eq("slug", slug)
+        .maybeSingle();
+      if (error) raise(error);
+      return data as Campus | null;
+    },
+    () => seedCampuses.find((c) => c.slug === slug) ?? null,
+  );
+}
+
+/** Campuses with at least one listed study, with counts, for the campus picker. */
+export async function getActiveCampuses(): Promise<(Campus & { studyCount: number })[]> {
+  const [campuses, counts] = await Promise.all([
+    getCampuses(),
+    withFallback(
+      "getActiveCampuses",
+      async () => {
+        const { data, error } = await getSupabase()!
+          .from("bible_studies")
+          .select("campus_id")
+          .eq("status", "active");
+        if (error) raise(error);
+        return data.map((r) => r.campus_id as string);
+      },
+      () => seedStudies.map((s) => s.campusId),
+    ),
+  ]);
+  return campuses
+    .map((c) => ({ ...c, studyCount: counts.filter((id) => id === c.id).length }))
+    .filter((c) => c.studyCount > 0);
 }
 
 export async function getStudy(slug: string): Promise<Study | null> {

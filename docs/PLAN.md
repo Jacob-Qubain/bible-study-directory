@@ -25,6 +25,8 @@ joining never require an account.
 ## Data model (`supabase/migrations/20260924000000_init.sql`)
 
 ```
+                                campuses
+                                    │
 leaders ──< study_leaders >── bible_studies ──< study_tags >── tags
                                     │
                                     └──< inquiries
@@ -33,7 +35,9 @@ leaders ──< study_leaders >── bible_studies ──< study_tags >── t
 - **bible_studies**: title, summary, description, curriculum; schedule as local wall-clock
   (`day_of_week`, `start_time`, `timezone`, `cadence` weekly/biweekly, `anchor_date` for biweekly parity);
   `format`, public `neighborhood`/`location_name`, **private** `address`/`meeting_url`; hospitality
-  (`childcare`, `food`, `capacity`); `status` active/paused/archived.
+  (`food`, `capacity`); `status` active/paused/archived; `campus_id` (required).
+- **campuses**: `slug` (the top-level URL, e.g. `/baylor`; app route names are reserved), name, city,
+  timezone. Studies copy their campus's timezone on save. Admins manage campuses.
 - **leaders**: name, photo, bio, **private** `email` (magic-link login), opt-in `public_phone` + `whatsapp`.
 - **tags**: `category` = audience (men, women, college, …) or topic (book study, prayer, …).
 - **inquiries**: name + email-or-phone + optional note, `status` new/contacted/joined/declined.
@@ -52,7 +56,8 @@ Security:
 ```
 proxy.ts                           Session refresh + sign-in guard for /leader/*
 app/
-  page.tsx                         Directory (server: fetch + parse URL filters)
+  page.tsx                         Campus picker (or redirect to the remembered campus)
+  [campus]/page.tsx                One campus's directory (server: fetch + parse URL filters)
   auth/confirm/route.ts            Magic-link landing
   leader/login/                    Sign-in page + actions
   leader/(app)/                    Dashboard, studies editor, people, profile, welcome, admin
@@ -96,6 +101,12 @@ area, text search), soonest-first cards, detail page, one-step join, Google/ICS 
 - Point Supabase Auth's SMTP at Resend so sign-in links reach every leader, not just team members.
 - Deploy to Vercel on findabiblestudy.org.
 - Realtime "new person" badge; photo upload to Supabase Storage; co-leader invites.
+
+**Phase 2c: Campuses ✅**
+- `/` is a campus picker (only campuses with a live study), skipped when there's a remembered campus
+  (cookie) or only one campus. `/?choose` always shows it ("Change campus").
+- `/<campus>` is that campus's directory, shareable on its own. Leaders pick a campus per study;
+  admins add campuses in `/leader/admin`. Childcare option removed.
 
 **Phase 3: Reach**
 - PWA manifest + offline shell; "near me" sort (store lat/lng, PostGIS `earth_distance`).

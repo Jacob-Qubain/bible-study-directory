@@ -1,4 +1,4 @@
-import { Baby, Laptop, MapPin, MonitorSmartphone, Utensils, Cookie } from "lucide-react";
+import { Cookie, Laptop, MapPin, MonitorSmartphone, Utensils } from "lucide-react";
 import type { Study, StudyFormat } from "@/lib/types";
 
 export const FORMAT_LABELS: Record<StudyFormat, string> = {
@@ -19,13 +19,12 @@ export function FormatBadge({ format }: { format: StudyFormat }) {
   );
 }
 
-/** Hospitality details that remove excuses: kids, food. */
+/** Hospitality details that remove excuses. */
 export function Perks({ study }: { study: Study }) {
   const perks = [
-    study.childcare && { icon: Baby, label: "Childcare" },
     study.food === "meal" && { icon: Utensils, label: "Dinner provided" },
     study.food === "snacks" && { icon: Cookie, label: "Snacks" },
-  ].filter(Boolean) as { icon: typeof Baby; label: string }[];
+  ].filter(Boolean) as { icon: typeof Cookie; label: string }[];
 
   if (!perks.length) return null;
   return (

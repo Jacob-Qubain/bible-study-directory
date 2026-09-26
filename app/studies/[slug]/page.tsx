@@ -86,11 +86,11 @@ export default async function StudyPage(props: PageProps<"/studies/[slug]">) {
   return (
     <div className="mx-auto max-w-6xl px-4 pt-6 pb-16">
       <Link
-        href="/"
+        href={`/${study.campus.slug}`}
         className="inline-flex min-h-10 items-center gap-1.5 text-sm font-medium text-muted hover:text-ink"
       >
         <ArrowLeft className="size-4" aria-hidden />
-        All studies
+        All studies at {study.campus.name}
       </Link>
 
       {/* Mobile order: header → join card → details. Desktop: sticky join card on the right. */}

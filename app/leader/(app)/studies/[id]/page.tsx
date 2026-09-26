@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireLeader } from "@/lib/auth";
+import { getCampuses } from "@/lib/data/studies";
 import { getAllTags, getEditableStudy } from "@/lib/leader/queries";
 import { studyToFormValues } from "@/lib/leader/study-form";
 import { StudyForm } from "../study-form";
@@ -11,9 +12,10 @@ export const metadata: Metadata = { title: "Edit study" };
 export default async function EditStudyPage(props: PageProps<"/leader/studies/[id]">) {
   const { id } = await props.params;
   const { supabase, leader } = await requireLeader();
-  const [study, tags] = await Promise.all([
+  const [study, tags, campuses] = await Promise.all([
     getEditableStudy(supabase, id, leader.id),
     getAllTags(supabase),
+    getCampuses(),
   ]);
   if (!study) notFound();
 
@@ -24,6 +26,7 @@ export default async function EditStudyPage(props: PageProps<"/leader/studies/[i
         studyId={study.id}
         initial={studyToFormValues(study, study)}
         tags={tags}
+        campuses={campuses}
       />
       <div className="border-t border-line pt-6">
         <DeleteStudyButton studyId={study.id} title={study.title} />
