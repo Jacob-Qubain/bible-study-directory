@@ -1,6 +1,6 @@
-# Bible Study Directory
+# Find a Bible Study
 
-Find a Bible study this week: no sign-up, no pressure. Browse, filter, and join a group in ten seconds.
+Find a Bible study this week at [findabiblestudy.org](https://findabiblestudy.org): no sign-up, no pressure. Browse, filter, and join a group in ten seconds.
 
 See [docs/PLAN.md](docs/PLAN.md) for the architecture, data model, and roadmap.
 
@@ -37,6 +37,18 @@ on the bundled seed data in `lib/data/seed-data.ts`, and join requests are logge
    update leaders set is_admin = true, approved = true
    where auth_user_id = (select id from auth.users where email = 'you@example.com');
    ```
+
+### Leader notifications
+
+When someone taps "Count me in", their study's leaders get an email (replying goes straight to the
+visitor). Add to `.env.local`, then restart `npm run dev`:
+
+- `SUPABASE_SERVICE_ROLE_KEY`: Supabase → Project Settings → API Keys → the **secret** key. Server-only;
+  never give it a `NEXT_PUBLIC_` prefix.
+- `RESEND_API_KEY`: from [resend.com](https://resend.com) → API Keys. Until you verify a domain there,
+  Resend only delivers to the email you signed up with.
+
+Without these keys the app still works; notifications are just logged and skipped.
 
 Supabase's built-in email only delivers to your project's team members (a few per hour). Before
 inviting other leaders, set up custom SMTP (for example Resend) under **Authentication → SMTP**.

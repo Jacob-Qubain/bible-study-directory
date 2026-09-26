@@ -1,6 +1,8 @@
 "use server";
 
+import { after } from "next/server";
 import { submitInquiry } from "@/lib/data/studies";
+import { notifyLeadersOfInquiry } from "@/lib/notify";
 import { normalizePhone } from "@/lib/phone";
 import type { PrivateMeetingDetails } from "@/lib/types";
 
@@ -50,7 +52,10 @@ export async function joinStudy(
   }
 
   try {
-    const details = await submitInquiry({ studyId, name, message, ...contact! });
+    const inquiry = { studyId, name, message, ...contact! };
+    const details = await submitInquiry(inquiry);
+    // Email the leader once the visitor already has their confirmation.
+    after(() => notifyLeadersOfInquiry(inquiry));
     return { status: "success", firstName: name.split(/\s+/)[0], details };
   } catch (err) {
     const tooMany = (err as Error).message.includes("Too many");

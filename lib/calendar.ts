@@ -45,10 +45,10 @@ export function icsFor(study: Study, start: Date, siteUrl: string) {
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Bible Study Directory//EN",
+    "PRODID:-//Find a Bible Study//EN",
     "CALSCALE:GREGORIAN",
     "BEGIN:VEVENT",
-    `UID:${study.id}@bible-study-directory`,
+    `UID:${study.id}@findabiblestudy.org`,
     `DTSTAMP:${stamp}`,
     `DTSTART;TZID=${tz}:${localStamp(start, tz)}`,
     `DTEND;TZID=${tz}:${localStamp(end, tz)}`,

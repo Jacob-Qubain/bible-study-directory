@@ -1,4 +1,4 @@
-# Architecture & Roadmap
+# Find a Bible Study: Architecture & Roadmap
 
 **Mission:** remove every excuse between a person and a Bible study. Browsing, reading details, and
 joining never require an account.
@@ -91,8 +91,10 @@ area, text search), soonest-first cards, detail page, one-step join, Google/ICS 
 - Private details moved to `study_private` so signed-in users can't read other studies' addresses.
 
 **Phase 2b: Leader follow-ups**
-- Email/SMS to the leader on each inquiry (Edge Function + Resend/Twilio). Needs custom SMTP anyway,
-  since Supabase's built-in email only reaches project team members.
+- ✅ Email to the study's leaders on each "Count me in" (Resend, sent with `after()` so visitors never
+  wait; reply-to is the visitor). Domain: findabiblestudy.org, verified in Resend.
+- Point Supabase Auth's SMTP at Resend so sign-in links reach every leader, not just team members.
+- Deploy to Vercel on findabiblestudy.org.
 - Realtime "new person" badge; photo upload to Supabase Storage; co-leader invites.
 
 **Phase 3: Reach**
