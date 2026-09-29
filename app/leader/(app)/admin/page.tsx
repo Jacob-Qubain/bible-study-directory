@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Check, Trash2, Undo2, UserPlus, X } from "lucide-react";
-import { buttonClass, inputClass } from "@/components/ui/field";
+import { buttonClass, inputClass, Select } from "@/components/ui/field";
 import { requireAdmin } from "@/lib/auth";
 import { setApproval } from "./actions";
 import { addCampusContact, removeCampus, removeCampusContact } from "./campus-actions";
@@ -25,7 +25,7 @@ export default async function AdminPage() {
     supabase.from("campuses").select("id, slug, name, city").order("name"),
     // Admins can see every study, listed or not.
     supabase.from("bible_studies").select("campus_id"),
-    supabase.from("campus_contacts").select("campus_id, leader_id, title, leaders ( name )").order("sort_order"),
+    supabase.from("campus_contacts").select("campus_id, leader_id, leaders ( name )").order("sort_order"),
   ]);
   const error = leaderResult.error ?? campusResult.error ?? studyResult.error ?? contactResult.error;
   if (error) throw new Error(error.message);
@@ -37,7 +37,6 @@ export default async function AdminPage() {
       contactResult.data as unknown as {
         campus_id: string;
         leader_id: string;
-        title: string;
         leaders: { name: string } | null;
       }[]
     ).filter((k) => k.campus_id === c.id),
@@ -124,7 +123,8 @@ export default async function AdminPage() {
                 <p className="text-sm font-medium">
                   Contacts{" "}
                   <span className="font-normal text-muted">
-                    · shown on the campus page; they get &ldquo;nothing fits my schedule&rdquo; requests
+                    · shown on the campus page; they get &ldquo;nothing fits my schedule&rdquo; requests.
+                    With none, requests go to admins.
                   </span>
                 </p>
                 {c.contacts.length > 0 && (
@@ -134,7 +134,7 @@ export default async function AdminPage() {
                         key={k.leader_id}
                         className="inline-flex items-center gap-1 rounded-full bg-accent-soft py-1 pr-1 pl-3 text-sm"
                       >
-                        {k.leaders?.name ?? "Unknown"} <span className="text-muted">· {k.title}</span>
+                        {k.leaders?.name ?? "Unknown"}
                         <form action={removeCampusContact.bind(null, c.id, k.leader_id)}>
                           <button
                             type="submit"
@@ -148,11 +148,20 @@ export default async function AdminPage() {
                     ))}
                   </ul>
                 )}
-                <form action={addCampusContact.bind(null, c.id)} className="flex flex-wrap items-center gap-2">
+                <form
+                  action={addCampusContact.bind(null, c.id)}
+                  className="flex flex-wrap items-center gap-2"
+                >
                   <label className="sr-only" htmlFor={`contact-${c.id}`}>
                     Leader to add as a contact for {c.name}
                   </label>
-                  <select id={`contact-${c.id}`} name="leaderId" required className={`${inputClass} h-10 w-auto min-w-40 text-sm`}>
+                  <Select
+                    id={`contact-${c.id}`}
+                    name="leaderId"
+                    required
+                    wrapperClassName="min-w-0 flex-1 sm:max-w-xs"
+                    className={`${inputClass} h-11 text-sm`}
+                  >
                     <option value="">Choose a leader…</option>
                     {approved
                       .filter((l) => !c.contacts.some((k) => k.leader_id === l.id))
@@ -161,19 +170,10 @@ export default async function AdminPage() {
                           {l.name}
                         </option>
                       ))}
-                  </select>
-                  <label className="sr-only" htmlFor={`title-${c.id}`}>
-                    Title
-                  </label>
-                  <input
-                    id={`title-${c.id}`}
-                    name="title"
-                    defaultValue="Campus missionary"
-                    className={`${inputClass} h-10 w-44 text-sm`}
-                  />
+                  </Select>
                   <button type="submit" className={buttonClass.secondary}>
                     <UserPlus className="size-4" aria-hidden />
-                    Add contact
+                    Add
                   </button>
                 </form>
               </div>

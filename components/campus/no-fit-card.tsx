@@ -17,7 +17,8 @@ function who(contacts: CampusContact[]) {
 
 /**
  * "Nothing fits your schedule?" Collects when a student is free and sends it
- * to the campus's contacts. Days and times start from the filters they tried.
+ * to the campus's contacts (or the admins, if it has none). Days and times
+ * start from the filters they tried.
  */
 export function NoFitCard({
   campusId,
@@ -62,17 +63,16 @@ export function NoFitCard({
         </div>
       </div>
 
-      <ul className="flex flex-wrap gap-x-6 gap-y-3">
-        {contacts.map((c) => (
-          <li key={c.leaderId} className="flex items-center gap-3">
-            <Avatar leader={{ id: c.leaderId, name: c.name, photoUrl: c.photoUrl }} />
-            <span className="grid text-sm">
-              <span className="font-semibold">{c.name}</span>
-              <span className="text-muted">{c.title}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
+      {contacts.length > 0 && (
+        <ul className="flex flex-wrap gap-x-6 gap-y-3">
+          {contacts.map((c) => (
+            <li key={c.leaderId} className="flex items-center gap-3 text-sm font-semibold">
+              <Avatar leader={{ id: c.leaderId, name: c.name, photoUrl: c.photoUrl }} />
+              {c.name}
+            </li>
+          ))}
+        </ul>
+      )}
 
       {state.status === "sent" ? (
         <p role="status" className="flex items-center gap-2 font-semibold">

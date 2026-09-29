@@ -251,7 +251,6 @@ export async function submitInquiry(input: InquiryInput): Promise<PrivateMeeting
 }
 
 interface ContactRow {
-  title: string;
   sort_order: number;
   leaders: {
     id: string;
@@ -269,17 +268,16 @@ export async function getCampusContacts(campusId: string): Promise<CampusContact
     async () => {
       const { data, error } = await getSupabase()!
         .from("campus_contacts")
-        .select("title, sort_order, leaders ( id, name, photo_url, public_phone, whatsapp )")
+        .select("sort_order, leaders ( id, name, photo_url, public_phone, whatsapp )")
         .eq("campus_id", campusId)
         .order("sort_order");
       if (error) raise(error);
-      return (data as unknown as ContactRow[]).flatMap(({ title, leaders: l }) =>
+      return (data as unknown as ContactRow[]).flatMap(({ leaders: l }) =>
         l
           ? [
               {
                 leaderId: l.id,
                 name: l.name,
-                title,
                 photoUrl: l.photo_url,
                 publicPhone: l.public_phone,
                 whatsapp: l.whatsapp,

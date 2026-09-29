@@ -3,7 +3,7 @@
 import { useActionState, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Lock, Sparkles } from "lucide-react";
-import { buttonClass, describedBy, Field, inputClass, Notice } from "@/components/ui/field";
+import { buttonClass, describedBy, Field, inputClass, Notice, Select } from "@/components/ui/field";
 import { FORMAT_LABELS } from "@/components/study-badges";
 import { draftDescription } from "@/lib/leader/describe";
 import type { StudyFormValues } from "@/lib/leader/study-form";
@@ -102,19 +102,19 @@ export function StudyForm({
             <input {...input("time")} type="time" defaultValue={values.time} required />
           </Field>
           <Field id="cadence" label="How often" error={errors.cadence}>
-            <select {...input("cadence")} defaultValue={values.cadence}>
+            <Select {...input("cadence")} defaultValue={values.cadence}>
               <option value="weekly">Every week</option>
               <option value="biweekly">Every other week</option>
-            </select>
+            </Select>
           </Field>
           <Field id="duration" label="How long" error={errors.duration}>
-            <select {...input("duration")} defaultValue={values.duration}>
+            <Select {...input("duration")} defaultValue={values.duration}>
               {DURATIONS.map((m) => (
                 <option key={m} value={m}>
                   {durationLabel(m)}
                 </option>
               ))}
-            </select>
+            </Select>
           </Field>
         </div>
       </Section>
@@ -126,14 +126,14 @@ export function StudyForm({
           error={errors.campusId}
           hint="Your study is listed on this campus's page. Don't see yours? Ask an admin to add it."
         >
-          <select {...input("campusId", true)} defaultValue={values.campusId} required>
+          <Select {...input("campusId", true)} defaultValue={values.campusId} required>
             {!values.campusId && <option value="">Choose a campus…</option>}
             {campuses.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>
             ))}
-          </select>
+          </Select>
         </Field>
 
         <div role="radiogroup" aria-label="Format" className="flex flex-wrap gap-2">
@@ -214,11 +214,11 @@ export function StudyForm({
       <Section title="Hospitality">
         <div className="grid gap-5 sm:grid-cols-2">
           <Field id="food" label="Food" error={errors.food}>
-            <select {...input("food")} defaultValue={values.food}>
+            <Select {...input("food")} defaultValue={values.food}>
               <option value="none">None</option>
               <option value="snacks">Snacks</option>
               <option value="meal">A meal</option>
-            </select>
+            </Select>
           </Field>
           <Field id="capacity" label="Room for about" optional error={errors.capacity}>
             <input {...input("capacity")} type="number" inputMode="numeric" min={1} defaultValue={values.capacity} />

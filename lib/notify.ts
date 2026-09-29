@@ -93,7 +93,7 @@ interface CampusWithContacts {
   campus_contacts: { leaders: { auth_user_id: string | null } | null }[];
 }
 
-/** Emails a campus's contacts when a student says no study fits their schedule. */
+/** Emails a campus's contacts (or the admins, if it has none) when no study fits a student. */
 export async function notifyCampusContactsOfRequest(request: StudyRequestInput) {
   const admin = getSupabaseAdmin();
   if (!admin) {
@@ -109,7 +109,12 @@ export async function notifyCampusContactsOfRequest(request: StudyRequestInput) 
     console.error("[notify] campus lookup failed:", error.message);
     return;
   }
-  const ids = data.campus_contacts.flatMap(({ leaders: l }) => (l?.auth_user_id ? [l.auth_user_id] : []));
+  let ids = data.campus_contacts.flatMap(({ leaders: l }) => (l?.auth_user_id ? [l.auth_user_id] : []));
+  if (!ids.length) {
+    // No contacts for this campus yet: the admins pick it up instead.
+    const { data: admins } = await admin.from("leaders").select("auth_user_id").eq("is_admin", true);
+    ids = (admins ?? []).flatMap((a) => (a.auth_user_id ? [a.auth_user_id as string] : []));
+  }
   const emails = await emailsFor(admin, ids);
   if (!emails.length) return;
 

@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
+import { ChevronDown } from "lucide-react";
 
 export const inputClass =
   "h-12 w-full rounded-xl border border-line bg-background px-4 text-base placeholder:text-muted focus:border-accent focus:outline-none aria-[invalid=true]:border-warm";
@@ -62,6 +63,26 @@ export function Notice({ tone = "info", children }: { tone?: "info" | "warn"; ch
       }`}
     >
       {children}
+    </div>
+  );
+}
+
+/**
+ * Native <select> (keeps the phone's picker) with our own chevron, spaced
+ * away from the rounded edge instead of the browser's default arrow.
+ */
+export function Select({
+  className = inputClass,
+  wrapperClassName = "",
+  ...props
+}: ComponentProps<"select"> & { wrapperClassName?: string }) {
+  return (
+    <div className={`relative ${wrapperClassName}`}>
+      <select {...props} className={`${className} appearance-none pr-10`} />
+      <ChevronDown
+        className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-muted"
+        aria-hidden
+      />
     </div>
   );
 }

@@ -19,7 +19,6 @@ export const seedCampusContacts: (CampusContact & { campusId: string })[] = [
     campusId: "c0000000-0000-4000-8000-000000000001",
     leaderId: "0b1f3c1e-1111-4a00-8000-000000000007",
     name: "Hannah Kim",
-    title: "Campus missionary",
     photoUrl: null,
     publicPhone: "+15125550107",
     whatsapp: true,

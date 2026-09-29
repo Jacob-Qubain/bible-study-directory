@@ -68,7 +68,6 @@ const sql = [
     seedCampusContacts.map((c, i) => ({
       campus_id: c.campusId,
       leader_id: c.leaderId,
-      title: c.title,
       sort_order: i,
     })),
     "(campus_id, leader_id)",

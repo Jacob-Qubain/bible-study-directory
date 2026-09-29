@@ -80,7 +80,7 @@ export function Directory({
             <p className="font-display text-lg font-semibold">No studies match all of those.</p>
             <p className="max-w-sm text-muted">
               Try removing a filter or two — there {studies.length === 1 ? "is 1 group" : `are ${studies.length} groups`}{" "}
-              meeting every week.{contacts.length > 0 && " Or tell us when you're free, below."}
+              meeting every week. Or tell us when you&apos;re free, below.
             </p>
             <button
               type="button"
@@ -93,9 +93,7 @@ export function Directory({
         )}
       </section>
 
-      {contacts.length > 0 && (
-        <NoFitCard campusId={campusId} contacts={contacts} days={filters.days} times={filters.times} />
-      )}
+      <NoFitCard campusId={campusId} contacts={contacts} days={filters.days} times={filters.times} />
     </div>
   );
 }

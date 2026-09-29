@@ -22,7 +22,6 @@ export interface Campus {
 export interface CampusContact {
   leaderId: string;
   name: string;
-  title: string;
   photoUrl: string | null;
   publicPhone: string | null;
   whatsapp: boolean;

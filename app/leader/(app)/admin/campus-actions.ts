@@ -64,25 +64,14 @@ export async function removeCampus(campusId: string) {
   refresh();
 }
 
-const contactSchema = z.object({
-  leaderId: z.uuid(),
-  title: z.string().trim().min(1).max(60),
-});
-
-/** Adds (or retitles) a campus contact: they'll get that campus's requests. */
+/** Adds a campus contact: they'll get that campus's "nothing fits" requests. */
 export async function addCampusContact(campusId: string, formData: FormData) {
   const { supabase } = await requireAdmin();
-  const parsed = contactSchema.safeParse({
-    leaderId: formData.get("leaderId"),
-    title: formData.get("title") || "Campus missionary",
-  });
-  if (!parsed.success) return;
+  const leaderId = z.uuid().safeParse(formData.get("leaderId"));
+  if (!leaderId.success) return;
   const { error } = await supabase
     .from("campus_contacts")
-    .upsert(
-      { campus_id: campusId, leader_id: parsed.data.leaderId, title: parsed.data.title },
-      { onConflict: "campus_id,leader_id" },
-    );
+    .upsert({ campus_id: campusId, leader_id: leaderId.data }, { onConflict: "campus_id,leader_id" });
   if (error) throw new Error(error.message);
   refresh();
 }

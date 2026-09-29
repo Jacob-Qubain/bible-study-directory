@@ -114,8 +114,8 @@ area, text search), soonest-first cards, detail page, one-step join, Google/ICS 
 - Footer feedback link (Google Form) and Vercel Web Analytics.
 
 **Phase 2e: When nothing fits ✅**
-- "Nothing fits your schedule?" card on each campus page (only when the campus has contacts): days/times
-  prefilled from the filters the student tried, sent to that campus's contacts (e.g. missionaries).
+- "Nothing fits your schedule?" card on every campus page: days/times prefilled from the filters the
+  student tried, sent to that campus's contacts (e.g. missionaries), or to admins if it has none.
 - `campus_contacts` (admin-assigned, shown publicly by name) and `study_requests` (visible only to that
   campus's contacts and admins; submitted via the rate-limited `submit_study_request()`).
 - `/leader/requests`: demand grid of when people are free vs. when studies meet, filterable list,

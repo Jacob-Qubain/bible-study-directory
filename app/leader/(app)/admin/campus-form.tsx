@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { Plus } from "lucide-react";
-import { buttonClass, Field, inputClass } from "@/components/ui/field";
+import { buttonClass, Field, inputClass, Select } from "@/components/ui/field";
 import { slugify } from "@/lib/slugify";
 import { US_TIMEZONES } from "@/lib/timezones";
 import { addCampus, type CampusFormState } from "./campus-actions";
@@ -48,7 +48,7 @@ function CampusFields({ initial }: { initial?: Values }) {
         />
       </Field>
       <Field id="campus-timezone" label="Timezone">
-        <select
+        <Select
           id="campus-timezone"
           name="timezone"
           defaultValue={initial?.timezone ?? "America/Chicago"}
@@ -59,7 +59,7 @@ function CampusFields({ initial }: { initial?: Values }) {
               {label}
             </option>
           ))}
-        </select>
+        </Select>
       </Field>
     </div>
   );
