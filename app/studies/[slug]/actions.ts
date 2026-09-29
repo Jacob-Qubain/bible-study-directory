@@ -3,7 +3,7 @@
 import { after } from "next/server";
 import { submitInquiry } from "@/lib/data/studies";
 import { notifyLeadersOfInquiry } from "@/lib/notify";
-import { normalizePhone } from "@/lib/phone";
+import { parseContact } from "@/lib/contact";
 import type { PrivateMeetingDetails } from "@/lib/types";
 
 export type JoinState =
@@ -16,16 +16,6 @@ export type JoinState =
       values: { name: string; contact: string; message: string };
     }
   | { status: "success"; firstName: string; details: PrivateMeetingDetails };
-
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-/** One contact field accepts either an email or a phone number. */
-function parseContact(raw: string): { email: string | null; phone: string | null } | null {
-  const value = raw.trim();
-  if (value.includes("@")) return EMAIL.test(value) ? { email: value, phone: null } : null;
-  const phone = normalizePhone(value);
-  return phone ? { email: null, phone } : null;
-}
 
 export async function joinStudy(
   studyId: string,

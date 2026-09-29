@@ -5,7 +5,7 @@ import { ArrowLeftRight, GraduationCap } from "lucide-react";
 import { RememberCampus } from "@/components/campus/remember-campus";
 import { Directory } from "@/components/directory/directory";
 import { CHOOSE_CAMPUS_HREF } from "@/lib/campus-cookie";
-import { getCampus, getStudies } from "@/lib/data/studies";
+import { getCampus, getCampusContacts, getStudies } from "@/lib/data/studies";
 import { parseFilters, studyArea, ONLINE_AREA } from "@/lib/filters";
 import { requestTime } from "@/lib/request-time";
 import type { Tag } from "@/lib/types";
@@ -24,7 +24,7 @@ export default async function CampusPage(props: PageProps<"/[campus]">) {
   const [{ campus: slug }, searchParams] = await Promise.all([props.params, props.searchParams]);
   const campus = await getCampus(slug);
   if (!campus) notFound();
-  const studies = await getStudies(campus.id);
+  const [studies, contacts] = await Promise.all([getStudies(campus.id), getCampusContacts(campus.id)]);
 
   // Only offer filter options that would actually return something.
   const tags = [
@@ -65,6 +65,8 @@ export default async function CampusPage(props: PageProps<"/[campus]">) {
         areas={areas}
         initialFilters={parseFilters(searchParams)}
         serverNow={requestTime()}
+        campusId={campus.id}
+        contacts={contacts}
       />
     </div>
   );

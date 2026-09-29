@@ -11,6 +11,9 @@ export default async function LeaderLayout({ children }: LayoutProps<"/leader">)
     ? [
         { href: "/leader", label: "My studies" },
         { href: "/leader/people", label: "People" },
+        ...(leader.contactCampusIds.length || leader.isAdmin
+          ? [{ href: "/leader/requests", label: "Looking for a study" }]
+          : []),
         { href: "/leader/profile", label: "Profile" },
         ...(leader.isAdmin ? [{ href: "/leader/admin", label: "Admin" }] : []),
       ]

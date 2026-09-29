@@ -39,6 +39,10 @@ insert into bible_studies (id, campus_id, slug, title, summary, description, cur
   ('5a7d0c2e-2222-4b00-8000-000000000009', 'c0000000-0000-4000-8000-000000000001', 'lunch-break-prayer', 'Lunch-Break Prayer', 'Twenty-five minutes of Scripture and prayer from your desk.', 'A short reading, a few shared requests, and we pray. Built for people who can''t make evenings. Drop in any week — no need to come every time.', 'Daily lectionary reading', 2, '12:05', 25, 'America/Chicago', 'weekly', '2026-09-01', 'online', null, 'Google Meet', 'none', null)
 on conflict (id) do nothing;
 
+insert into campus_contacts (campus_id, leader_id, title, sort_order) values
+  ('c0000000-0000-4000-8000-000000000001', '0b1f3c1e-1111-4a00-8000-000000000007', 'Campus missionary', 0)
+on conflict (campus_id, leader_id) do nothing;
+
 update study_private set address = '4108 Pecan Grove Ln, Eastwood', meeting_url = null where study_id = '5a7d0c2e-2222-4b00-8000-000000000001';
 
 update study_private set address = 'Student Union Room 214, 2308 Whitis Ave', meeting_url = null where study_id = '5a7d0c2e-2222-4b00-8000-000000000002';

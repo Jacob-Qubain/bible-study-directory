@@ -1,7 +1,7 @@
 // Sample directory content. Used as the local data source when Supabase isn't
 // configured, and compiled to supabase/seed.sql by `npm run db:seed-sql`.
 // Keep this file free of runtime imports so Node can run the generator directly.
-import type { Campus, Leader, PrivateMeetingDetails, Study, Tag } from "../types";
+import type { Campus, CampusContact, Leader, PrivateMeetingDetails, Study, Tag } from "../types";
 
 export const seedCampuses: Campus[] = [
   {
@@ -10,6 +10,19 @@ export const seedCampuses: Campus[] = [
     name: "Demo University",
     city: "Sample data",
     timezone: "America/Chicago",
+  },
+];
+
+/** Hannah doubles as the demo campus's contact for "Nothing fits your schedule?". */
+export const seedCampusContacts: (CampusContact & { campusId: string })[] = [
+  {
+    campusId: "c0000000-0000-4000-8000-000000000001",
+    leaderId: "0b1f3c1e-1111-4a00-8000-000000000007",
+    name: "Hannah Kim",
+    title: "Campus missionary",
+    photoUrl: null,
+    publicPhone: "+15125550107",
+    whatsapp: true,
   },
 ];
 

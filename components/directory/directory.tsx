@@ -3,12 +3,13 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { SearchX } from "lucide-react";
+import { NoFitCard } from "@/components/campus/no-fit-card";
 import { FilterBar } from "./filter-bar";
 import { StudyCard } from "./study-card";
 import { applyFilters, EMPTY_FILTERS, filtersToSearch, type Filters } from "@/lib/filters";
 import { nextMeeting } from "@/lib/schedule";
 import { useNow } from "@/lib/use-now";
-import type { Study, Tag } from "@/lib/types";
+import type { CampusContact, Study, Tag } from "@/lib/types";
 
 export function Directory({
   studies,
@@ -16,12 +17,16 @@ export function Directory({
   areas,
   initialFilters,
   serverNow,
+  campusId,
+  contacts,
 }: {
   studies: Study[];
   tags: Tag[];
   areas: string[];
   initialFilters: Filters;
   serverNow: number;
+  campusId: string;
+  contacts: CampusContact[];
 }) {
   const [filters, setFilters] = useState(initialFilters);
   const now = useNow(serverNow);
@@ -75,7 +80,7 @@ export function Directory({
             <p className="font-display text-lg font-semibold">No studies match all of those.</p>
             <p className="max-w-sm text-muted">
               Try removing a filter or two — there {studies.length === 1 ? "is 1 group" : `are ${studies.length} groups`}{" "}
-              meeting every week.
+              meeting every week.{contacts.length > 0 && " Or tell us when you're free, below."}
             </p>
             <button
               type="button"
@@ -87,6 +92,10 @@ export function Directory({
           </div>
         )}
       </section>
+
+      {contacts.length > 0 && (
+        <NoFitCard campusId={campusId} contacts={contacts} days={filters.days} times={filters.times} />
+      )}
     </div>
   );
 }

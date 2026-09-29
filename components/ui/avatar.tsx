@@ -25,7 +25,13 @@ const SIZES = {
   lg: "size-16 text-lg",
 };
 
-export function Avatar({ leader, size = "md" }: { leader: Leader; size?: keyof typeof SIZES }) {
+export function Avatar({
+  leader,
+  size = "md",
+}: {
+  leader: Pick<Leader, "id" | "name" | "photoUrl">;
+  size?: keyof typeof SIZES;
+}) {
   const cls = `${SIZES[size]} shrink-0 rounded-full ring-2 ring-surface`;
   if (leader.photoUrl) {
     // Leader photos come from arbitrary hosts; a plain <img> avoids remotePatterns config.

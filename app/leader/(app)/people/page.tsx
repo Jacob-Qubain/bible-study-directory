@@ -6,20 +6,13 @@ import { requireLeader } from "@/lib/auth";
 import { getInquiries, getMyStudies } from "@/lib/leader/queries";
 import { formatPhone } from "@/lib/phone";
 import { requestTime } from "@/lib/request-time";
+import { timeAgo } from "@/lib/time-ago";
+import { removeInquiry, updateInquiryStatus } from "./actions";
 import { CopyNumbers } from "./copy-numbers";
 import { RemovePersonButton } from "./remove-button";
 import { StatusSelect } from "./status-select";
 
 export const metadata: Metadata = { title: "People" };
-
-function timeAgo(iso: string, now: number) {
-  const minutes = Math.round((now - Date.parse(iso)) / 60_000);
-  const rtf = new Intl.RelativeTimeFormat("en-US", { numeric: "auto" });
-  if (minutes < 60) return rtf.format(-Math.max(minutes, 1), "minute");
-  if (minutes < 60 * 24) return rtf.format(-Math.round(minutes / 60), "hour");
-  if (minutes < 60 * 24 * 7) return rtf.format(-Math.round(minutes / 1440), "day");
-  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(new Date(iso));
-}
 
 export default async function PeoplePage(props: PageProps<"/leader/people">) {
   const { supabase, leader } = await requireLeader();
@@ -111,7 +104,7 @@ export default async function PeoplePage(props: PageProps<"/leader/people">) {
                       {timeAgo(q.createdAt, now)}
                     </p>
                   </div>
-                  <StatusSelect inquiry={q} />
+                  <StatusSelect id={q.id} name={q.name} status={q.status} action={updateInquiryStatus} />
                 </div>
 
                 {q.message && (
@@ -140,7 +133,7 @@ export default async function PeoplePage(props: PageProps<"/leader/people">) {
                       </a>
                     </>
                   )}
-                  <RemovePersonButton inquiryId={q.id} name={q.name} />
+                  <RemovePersonButton id={q.id} name={q.name} action={removeInquiry} />
                 </div>
               </li>
             );

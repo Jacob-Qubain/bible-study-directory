@@ -18,6 +18,16 @@ export interface Campus {
   timezone: string;
 }
 
+/** Someone a campus's visitors can reach when no study fits (e.g. a missionary). */
+export interface CampusContact {
+  leaderId: string;
+  name: string;
+  title: string;
+  photoUrl: string | null;
+  publicPhone: string | null;
+  whatsapp: boolean;
+}
+
 export interface Leader {
   id: string;
   name: string;

@@ -63,3 +63,37 @@ export async function removeCampus(campusId: string) {
   if (error) throw new Error(error.message);
   refresh();
 }
+
+const contactSchema = z.object({
+  leaderId: z.uuid(),
+  title: z.string().trim().min(1).max(60),
+});
+
+/** Adds (or retitles) a campus contact: they'll get that campus's requests. */
+export async function addCampusContact(campusId: string, formData: FormData) {
+  const { supabase } = await requireAdmin();
+  const parsed = contactSchema.safeParse({
+    leaderId: formData.get("leaderId"),
+    title: formData.get("title") || "Campus missionary",
+  });
+  if (!parsed.success) return;
+  const { error } = await supabase
+    .from("campus_contacts")
+    .upsert(
+      { campus_id: campusId, leader_id: parsed.data.leaderId, title: parsed.data.title },
+      { onConflict: "campus_id,leader_id" },
+    );
+  if (error) throw new Error(error.message);
+  refresh();
+}
+
+export async function removeCampusContact(campusId: string, leaderId: string) {
+  const { supabase } = await requireAdmin();
+  const { error } = await supabase
+    .from("campus_contacts")
+    .delete()
+    .eq("campus_id", campusId)
+    .eq("leader_id", leaderId);
+  if (error) throw new Error(error.message);
+  refresh();
+}

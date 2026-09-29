@@ -6,6 +6,8 @@ import type { Leader } from "./types";
 export interface LeaderAccount extends Leader {
   approved: boolean;
   isAdmin: boolean;
+  /** Campuses where this leader receives "nothing fits my schedule" requests. */
+  contactCampusIds: string[];
 }
 
 /** The signed-in user and their leader profile (if they've created one). Cached per request. */
@@ -22,6 +24,10 @@ export const getSession = cache(async () => {
     .maybeSingle();
   if (error) throw new Error(error.message);
 
+  const { data: contactRows } = row
+    ? await supabase.from("campus_contacts").select("campus_id").eq("leader_id", row.id)
+    : { data: [] };
+
   const leader: LeaderAccount | null = row && {
     id: row.id,
     name: row.name,
@@ -31,6 +37,7 @@ export const getSession = cache(async () => {
     whatsapp: row.whatsapp,
     approved: row.approved,
     isAdmin: row.is_admin,
+    contactCampusIds: (contactRows ?? []).map((c) => c.campus_id as string),
   };
   return { supabase, user: { id: claims.sub, email: String(claims.email ?? "") }, leader };
 });

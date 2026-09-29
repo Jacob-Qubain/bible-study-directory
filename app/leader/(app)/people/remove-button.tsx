@@ -3,9 +3,16 @@
 import { useState, useTransition } from "react";
 import { UserMinus } from "lucide-react";
 import { buttonClass } from "@/components/ui/field";
-import { removeInquiry } from "./actions";
 
-export function RemovePersonButton({ inquiryId, name }: { inquiryId: string; name: string }) {
+export function RemovePersonButton({
+  id,
+  name,
+  action,
+}: {
+  id: string;
+  name: string;
+  action: (id: string) => Promise<void>;
+}) {
   const [pending, startTransition] = useTransition();
   const [failed, setFailed] = useState(false);
 
@@ -25,7 +32,7 @@ export function RemovePersonButton({ inquiryId, name }: { inquiryId: string; nam
           setFailed(false);
           startTransition(async () => {
             try {
-              await removeInquiry(inquiryId);
+              await action(id);
             } catch {
               setFailed(true);
             }

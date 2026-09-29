@@ -113,6 +113,14 @@ area, text search), soonest-first cards, detail page, one-step join, Google/ICS 
 - Campus-life audience tags (Freshmen, Upperclassmen, Grad students, Men, Women, Everyone).
 - Footer feedback link (Google Form) and Vercel Web Analytics.
 
+**Phase 2e: When nothing fits ✅**
+- "Nothing fits your schedule?" card on each campus page (only when the campus has contacts): days/times
+  prefilled from the filters the student tried, sent to that campus's contacts (e.g. missionaries).
+- `campus_contacts` (admin-assigned, shown publicly by name) and `study_requests` (visible only to that
+  campus's contacts and admins; submitted via the rate-limited `submit_study_request()`).
+- `/leader/requests`: demand grid of when people are free vs. when studies meet, filterable list,
+  status, text/call/email, copy numbers, remove.
+
 **Phase 3: Reach**
 - PWA manifest + offline shell; "near me" sort (store lat/lng, PostGIS `earth_distance`).
 - Open Graph images per study for sharing; JSON-LD `Event` markup.

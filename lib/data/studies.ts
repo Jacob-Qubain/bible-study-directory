@@ -1,6 +1,6 @@
 import { getSupabase } from "../supabase/public";
-import type { Campus, PrivateMeetingDetails, Study, Tag } from "../types";
-import { seedCampuses, seedLeaders, seedStudies, seedTags } from "./seed-data";
+import type { Campus, CampusContact, PrivateMeetingDetails, Study, Tag, TimeOfDay } from "../types";
+import { seedCampusContacts, seedCampuses, seedLeaders, seedStudies, seedTags } from "./seed-data";
 
 // Public columns; private address / meeting link live in study_private.
 export const STUDY_COLUMNS = `
@@ -247,5 +247,77 @@ export async function submitInquiry(input: InquiryInput): Promise<PrivateMeeting
       const s = seedStudies.find((s) => s.id === input.studyId);
       return { address: s?.address ?? null, meetingUrl: s?.meetingUrl ?? null };
     },
+  );
+}
+
+interface ContactRow {
+  title: string;
+  sort_order: number;
+  leaders: {
+    id: string;
+    name: string;
+    photo_url: string | null;
+    public_phone: string | null;
+    whatsapp: boolean;
+  } | null;
+}
+
+/** Who "Nothing fits your schedule?" requests go to. Only approved leaders appear. */
+export async function getCampusContacts(campusId: string): Promise<CampusContact[]> {
+  return withFallback(
+    "getCampusContacts",
+    async () => {
+      const { data, error } = await getSupabase()!
+        .from("campus_contacts")
+        .select("title, sort_order, leaders ( id, name, photo_url, public_phone, whatsapp )")
+        .eq("campus_id", campusId)
+        .order("sort_order");
+      if (error) raise(error);
+      return (data as unknown as ContactRow[]).flatMap(({ title, leaders: l }) =>
+        l
+          ? [
+              {
+                leaderId: l.id,
+                name: l.name,
+                title,
+                photoUrl: l.photo_url,
+                publicPhone: l.public_phone,
+                whatsapp: l.whatsapp,
+              },
+            ]
+          : [],
+      );
+    },
+    () => seedCampusContacts.filter((c) => c.campusId === campusId),
+  );
+}
+
+export interface StudyRequestInput {
+  campusId: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  days: number[];
+  times: TimeOfDay[];
+  message: string | null;
+}
+
+/** "Nothing fits my schedule": saved for the campus's contacts to follow up. */
+export async function submitStudyRequest(input: StudyRequestInput): Promise<void> {
+  return withFallback(
+    "submitStudyRequest",
+    async () => {
+      const { error } = await getSupabase()!.rpc("submit_study_request", {
+        p_campus_id: input.campusId,
+        p_name: input.name,
+        p_email: input.email,
+        p_phone: input.phone,
+        p_days: input.days,
+        p_times: input.times,
+        p_message: input.message,
+      });
+      if (error) raise(error);
+    },
+    () => console.info("[data] study request (seed mode, not persisted):", input),
   );
 }

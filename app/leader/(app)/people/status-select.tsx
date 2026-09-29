@@ -1,21 +1,28 @@
 "use client";
 
-import { updateInquiryStatus } from "./actions";
-import { STATUS_LABELS } from "@/lib/leader/inquiry-status";
-import type { Inquiry } from "@/lib/leader/queries";
-
+import { STATUS_LABELS, type InquiryStatus } from "@/lib/leader/inquiry-status";
 
 /** Saves as soon as the leader picks a new status. */
-export function StatusSelect({ inquiry }: { inquiry: Inquiry }) {
+export function StatusSelect({
+  id,
+  name,
+  status,
+  action,
+}: {
+  id: string;
+  name: string;
+  status: InquiryStatus;
+  action: (id: string, formData: FormData) => Promise<void>;
+}) {
   return (
-    <form action={updateInquiryStatus.bind(null, inquiry.id)}>
-      <label className="sr-only" htmlFor={`status-${inquiry.id}`}>
-        Status for {inquiry.name}
+    <form action={action.bind(null, id)}>
+      <label className="sr-only" htmlFor={`status-${id}`}>
+        Status for {name}
       </label>
       <select
-        id={`status-${inquiry.id}`}
+        id={`status-${id}`}
         name="status"
-        defaultValue={inquiry.status}
+        defaultValue={status}
         onChange={(e) => e.currentTarget.form?.requestSubmit()}
         className="h-10 rounded-full border border-line bg-surface px-3 text-sm font-medium"
       >

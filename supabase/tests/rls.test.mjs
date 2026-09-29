@@ -150,5 +150,42 @@ await expect("…and those people are still there", () => db.query("select count
 await expect("leader removes someone from their own study", () =>
   as("authenticated", U1, "delete from inquiries where study_id = $1 returning id", [NEW]), (r) => rows(r) === 1);
 
+console.log("\n— Study requests (\"nothing fits my schedule\") —");
+const U3 = "44444444-4444-4444-8444-444444444444"; // missionary
+await db.exec(`insert into auth.users values ('${U3}', 'missionary@example.com');
+  insert into leaders (auth_user_id, name, approved) values ('${U3}', 'Sam Missionary', true);`);
+const BAYLOR = (await db.query("select id from campuses where slug = 'baylor'")).rows[0].id;
+await expect("visitors can read campus contacts", () => as("anon", null, "select * from campus_contacts"), (_r, e) => !e);
+await expect("leaders can't make themselves a campus contact", () =>
+  as("authenticated", U3, "insert into campus_contacts (campus_id, leader_id) select $1, id from leaders where auth_user_id = $2", [DEMO, U3]), (_r, e) => !!e);
+await expect("admins assign a campus contact", () =>
+  as("authenticated", U2, "insert into campus_contacts (campus_id, leader_id) select $1, id from leaders where auth_user_id = $2", [DEMO, U3]), (_r, e) => !e);
+await expect("visitors can't insert requests directly", () =>
+  as("anon", null, "insert into study_requests (campus_id, name, email) values ($1, 'X', 'x@example.com')", [DEMO]), (_r, e) => !!e);
+await expect("visitors submit a request through the function", () =>
+  as("anon", null, "select submit_study_request($1, 'Casey', 'casey@example.com', null, '{2,4}', '{evening}', 'Tue/Thu nights')", [DEMO]), (_r, e) => !e);
+await expect("bad days are refused", () =>
+  as("anon", null, "select submit_study_request($1, 'Bad', 'bad@example.com', null, '{9}', '{}')", [DEMO]), (_r, e) => !!e);
+await expect("bad times are refused", () =>
+  as("anon", null, "select submit_study_request($1, 'Bad', 'bad@example.com', null, '{}', '{midnight}')", [DEMO]), (_r, e) => !!e);
+await expect("requests are rate-limited", async () => {
+  for (let i = 0; i < 6; i++) await as("anon", null, "select submit_study_request($1, 'Spam', 'spam2@example.com')", [DEMO]);
+}, (_r, e) => e?.message.includes("Too many"));
+await expect("visitors can't read requests", () => as("anon", null, "select * from study_requests"), (r, e) => rows(r) === 0 || !!e);
+await expect("the campus contact sees their campus's requests", () =>
+  as("authenticated", U3, "select name, days, times from study_requests where campus_id = $1 and name = 'Casey'", [DEMO]),
+  (r) => rows(r) === 1 && r.rows[0].times[0] === "evening");
+await expect("a regular leader can't see requests", () => as("authenticated", U1, "select * from study_requests"), (r) => rows(r) === 0);
+await expect("a contact can't see another campus's requests", async () => {
+  await as("anon", null, "select submit_study_request($1, 'Other', 'other@example.com')", [BAYLOR]);
+  return as("authenticated", U3, "select * from study_requests where campus_id = $1", [BAYLOR]);
+}, (r) => rows(r) === 0);
+await expect("the contact can update a request's status", () =>
+  as("authenticated", U3, "update study_requests set status = 'contacted' where name = 'Casey'"), (r) => affected(r) === 1);
+await expect("…but can't rewrite what the student said", () =>
+  as("authenticated", U3, "update study_requests set name = 'x' where name = 'Casey'"), (_r, e) => !!e);
+await expect("the contact can remove a request", () =>
+  as("authenticated", U3, "delete from study_requests where name = 'Casey' returning id"), (r) => rows(r) === 1);
+
 console.log(`\n${failures ? `${failures} FAILED` : "All checks passed"}`);
 process.exit(failures ? 1 : 0);

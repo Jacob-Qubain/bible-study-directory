@@ -1,7 +1,7 @@
 // Compiles lib/data/seed-data.ts into supabase/seed.sql.
 // Run with: npm run db:seed-sql   (Node 22.18+ strips the types natively)
 import { writeFileSync } from "node:fs";
-import { seedCampuses, seedLeaders, seedStudies, seedTags } from "../lib/data/seed-data.ts";
+import { seedCampusContacts, seedCampuses, seedLeaders, seedStudies, seedTags } from "../lib/data/seed-data.ts";
 
 type Value = string | number | boolean | null;
 
@@ -62,6 +62,16 @@ const sql = [
       capacity: s.capacity,
     })),
     "(id)",
+  ),
+  insert(
+    "campus_contacts",
+    seedCampusContacts.map((c, i) => ({
+      campus_id: c.campusId,
+      leader_id: c.leaderId,
+      title: c.title,
+      sort_order: i,
+    })),
+    "(campus_id, leader_id)",
   ),
   // The insert trigger already created an empty study_private row per study.
   ...seedStudies.map(

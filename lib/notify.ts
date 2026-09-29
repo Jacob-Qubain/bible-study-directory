@@ -1,7 +1,9 @@
+import { formatAvailability } from "./availability";
 import { escapeHtml, sendEmail } from "./email";
 import { formatPhone } from "./phone";
 import { SITE_NAME, SITE_URL } from "./site";
 import { getSupabaseAdmin } from "./supabase/admin";
+import type { StudyRequestInput } from "./data/studies";
 
 export interface NewInquiry {
   studyId: string;
@@ -76,5 +78,72 @@ export async function notifyLeadersOfInquiry(inquiry: NewInquiry) {
     html,
     text,
     replyTo: inquiry.email ?? undefined,
+  });
+}
+
+/** Sign-in emails for leader profiles (service role only). */
+async function emailsFor(admin: NonNullable<ReturnType<typeof getSupabaseAdmin>>, authUserIds: string[]) {
+  const users = await Promise.all(authUserIds.map((id) => admin.auth.admin.getUserById(id)));
+  return users.map((u) => u.data.user?.email).filter((e): e is string => Boolean(e));
+}
+
+interface CampusWithContacts {
+  name: string;
+  slug: string;
+  campus_contacts: { leaders: { auth_user_id: string | null } | null }[];
+}
+
+/** Emails a campus's contacts when a student says no study fits their schedule. */
+export async function notifyCampusContactsOfRequest(request: StudyRequestInput) {
+  const admin = getSupabaseAdmin();
+  if (!admin) {
+    console.info("[notify] SUPABASE_SERVICE_ROLE_KEY not set; campus contacts not emailed.");
+    return;
+  }
+  const { data, error } = await admin
+    .from("campuses")
+    .select("name, slug, campus_contacts ( leaders ( auth_user_id ) )")
+    .eq("id", request.campusId)
+    .single<CampusWithContacts>();
+  if (error) {
+    console.error("[notify] campus lookup failed:", error.message);
+    return;
+  }
+  const ids = data.campus_contacts.flatMap(({ leaders: l }) => (l?.auth_user_id ? [l.auth_user_id] : []));
+  const emails = await emailsFor(admin, ids);
+  if (!emails.length) return;
+
+  const e = escapeHtml;
+  const who = request.name.split(/\s+/)[0];
+  const free = formatAvailability(request.days, request.times);
+  const inbox = `${SITE_URL}/leader/requests?campus=${data.slug}`;
+  const contact = [
+    request.email && { label: "Email", value: request.email, href: `mailto:${request.email}` },
+    request.phone && { label: "Phone", value: formatPhone(request.phone), href: `sms:${request.phone}` },
+  ].filter(Boolean) as { label: string; value: string; href: string }[];
+
+  const html = `
+<div style="font-family:system-ui,-apple-system,sans-serif;max-width:480px;color:#1f2a24;line-height:1.5">
+  <p style="font-size:18px;margin:0 0 12px"><strong>${e(request.name)}</strong> is looking for a Bible study at ${e(data.name)}, but none fit their schedule.</p>
+  <p style="margin:4px 0"><strong>Free:</strong> ${e(free)}</p>
+  ${contact.map((c) => `<p style="margin:4px 0">${c.label}: <a href="${e(c.href)}">${e(c.value)}</a></p>`).join("")}
+  ${request.message ? `<blockquote style="margin:16px 0;padding-left:12px;border-left:3px solid #e6ddcf">${e(request.message)}</blockquote>` : ""}
+  <p><a href="${inbox}" style="display:inline-block;background:#2f5d50;color:#fff;padding:10px 18px;border-radius:999px;text-decoration:none">See everyone looking</a></p>
+  <p style="color:#5d6a62;font-size:13px">${e(SITE_NAME)}</p>
+</div>`;
+  const text = [
+    `${request.name} is looking for a Bible study at ${data.name}, but none fit their schedule.`,
+    `Free: ${free}`,
+    ...contact.map((c) => `${c.label}: ${c.value}`),
+    request.message ? `\n"${request.message}"` : "",
+    `\nSee everyone looking: ${inbox}`,
+  ].join("\n");
+
+  await sendEmail({
+    to: emails,
+    subject: `${who} is looking for a study (${free})`,
+    html,
+    text,
+    replyTo: request.email ?? undefined,
   });
 }
