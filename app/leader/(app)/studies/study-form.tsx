@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState, useState, type ReactNode } from "react";
+import { useActionState, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Lock } from "lucide-react";
+import { Lock, Sparkles } from "lucide-react";
 import { buttonClass, describedBy, Field, inputClass, Notice } from "@/components/ui/field";
 import { FORMAT_LABELS } from "@/components/study-badges";
+import { draftDescription } from "@/lib/leader/describe";
 import type { StudyFormValues } from "@/lib/leader/study-form";
 import type { Campus, StudyFormat, Tag } from "@/lib/types";
 import { saveStudy, type StudyFormState } from "./actions";
@@ -49,6 +50,16 @@ export function StudyForm({
   const values = state.status === "error" ? state.values : initial;
   const errors = state.status === "error" ? state.fields : {};
   const [format, setFormat] = useState<StudyFormat>(values.format);
+  const formRef = useRef<HTMLFormElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+
+  function writeDraft() {
+    const box = descriptionRef.current;
+    if (!box || !formRef.current) return;
+    if (box.value.trim() && !confirm("Replace what you've written with a new draft?")) return;
+    box.value = draftDescription(new FormData(formRef.current), tags);
+    box.focus();
+  }
 
   const input = (id: keyof StudyFormValues, hint?: ReactNode) => ({
     ...describedBy(id, errors[id], hint),
@@ -56,7 +67,7 @@ export function StudyForm({
   });
 
   return (
-    <form action={action} className="grid gap-6" noValidate>
+    <form ref={formRef} action={action} className="grid gap-6" noValidate>
       {state.status === "error" && <Notice tone="warn">{state.message}</Notice>}
 
       <Section title="The basics">
@@ -81,11 +92,21 @@ export function StudyForm({
         >
           <textarea
             {...input("description", true)}
+            ref={descriptionRef}
             defaultValue={values.description}
             rows={5}
             className={`${inputClass} h-auto py-3`}
           />
         </Field>
+        <div className="-mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <button type="button" onClick={writeDraft} className={buttonClass.secondary}>
+            <Sparkles className="size-4 text-accent" aria-hidden />
+            Write it for me
+          </button>
+          <p className="text-sm text-muted">
+            Drafts a paragraph from the name and the details below. Fill those in first for a better draft.
+          </p>
+        </div>
         <Field id="curriculum" label="What you're reading" optional error={errors.curriculum}>
           <input {...input("curriculum")} defaultValue={values.curriculum} placeholder="The Gospel of Mark" />
         </Field>
