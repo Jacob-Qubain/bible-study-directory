@@ -83,30 +83,6 @@ export function StudyForm({
             placeholder="A relaxed walk through Mark over a home-cooked dinner."
           />
         </Field>
-        <Field
-          id="description"
-          label="What to expect"
-          optional
-          error={errors.description}
-          hint="Walk a first-timer through an evening. Do they need to bring anything? Will they be put on the spot?"
-        >
-          <textarea
-            {...input("description", true)}
-            ref={descriptionRef}
-            defaultValue={values.description}
-            rows={5}
-            className={`${inputClass} h-auto py-3`}
-          />
-        </Field>
-        <div className="-mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
-          <button type="button" onClick={writeDraft} className={buttonClass.secondary}>
-            <Sparkles className="size-4 text-accent" aria-hidden />
-            Write it for me
-          </button>
-          <p className="text-sm text-muted">
-            Drafts a paragraph from the name and the details below. Fill those in first for a better draft.
-          </p>
-        </div>
         <Field id="curriculum" label="What you're reading" optional error={errors.curriculum}>
           <input {...input("curriculum")} defaultValue={values.curriculum} placeholder="The Gospel of Mark" />
         </Field>
@@ -275,6 +251,33 @@ export function StudyForm({
             </div>
           </div>
         ))}
+      </Section>
+
+      <Section title="Describe it">
+        <Field
+          id="description"
+          label="What to expect"
+          optional
+          error={errors.description}
+          hint="Walk a first-timer through an evening. Do they need to bring anything? Will they be put on the spot?"
+        >
+          <textarea
+            {...input("description", true)}
+            ref={descriptionRef}
+            defaultValue={values.description}
+            rows={5}
+            className={`${inputClass} h-auto py-3`}
+          />
+        </Field>
+        <div className="-mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <button type="button" onClick={writeDraft} className={buttonClass.secondary}>
+            <Sparkles className="size-4 text-accent" aria-hidden />
+            Write it for me
+          </button>
+          <p className="text-sm text-muted">
+            Drafts a paragraph from everything you filled in above. You can edit it.
+          </p>
+        </div>
       </Section>
 
       <div className="flex flex-wrap items-center gap-3">
