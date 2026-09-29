@@ -1,59 +1,87 @@
-# Find A Bible Study
+# Find a Bible Study
 
-A responsive, friction-free discovery and member-onboarding platform built for university campuses to streamline how students connect with small groups and how group leaders manage outreach.
+A campus Bible study directory where students find a study and join it in about ten seconds, with no account. Leaders get a dashboard to post their study and follow up with the people who want to come.
 
-**Live Application:** [findabiblestudy.org](https://findabiblestudy.org)
+**Live:** [findabiblestudy.org](https://findabiblestudy.org) · Built by Jacob Qubain
 
----
+![Campus directory with day, time, and group filters](docs/screenshots/directory-desktop.png)
 
-## Overview
+## Why
 
-Joining campus small groups often involves scattered Google Forms, outdated group chats, or chaotic club fairs. **Find A Bible Study** solves this drop-off by removing onboarding barriers for students while giving group leaders a structured pipeline to track interest and coordinate immediate outreach.
+Finding a Bible study on campus usually means a club fair table, a stale group chat, or a sign-up form nobody follows up on. Every extra step (an account, a password, a long form) is a reason not to go. This app removes those steps for students, and gives leaders a simple way to reach everyone who shows interest.
 
-Designed and deployed for real-world user workflows, the platform prioritizes accessible UI/UX, responsive mobile layouts, and fast lead delivery to leaders.
+## Features
 
----
+**Students**
+- Pick your campus once; the site remembers it. Each campus has its own shareable page, like [findabiblestudy.org/tulsa-university](https://findabiblestudy.org/tulsa-university).
+- Filter by day, time of day, who it's for, focus, format, and area. Filters live in the URL, so a filtered list can be shared.
+- Each study shows when it meets next ("Tomorrow at 6:30pm"), what to expect, and who leads it.
+- Join with just a name and an email or phone number. The exact address or video link is revealed on joining, not published.
+- Add it to Google Calendar, or Apple/Outlook (a recurring `.ics` invite), or text the leader directly.
 
-## Key Features
+**Leaders**
+- Sign in with an emailed link; there are no passwords.
+- Post, edit, pause, and delete studies.
+- Get an email for every new person, and reply straight to them.
+- See everyone who reached out, track their status, and text, call, or email them in one tap.
+- Export people to phone contacts (`.vcf`) or a spreadsheet (`.csv`), or copy all numbers to start a group chat.
 
-### For Students (Frictionless Joining)
-- **Zero-Friction Search & Filter:** Rapid group discovery by meeting day, campus location, demographic, and time without mandatory account creation.
-- **Low-Barrier Signups:** Minimal data intake (Name, Preferred Contact Method, Year) designed to maximize conversion and prevent sign-up fatigue.
-- **Mobile-First Experience:** Tailored for college students scanning physical QR codes on campus fliers or opening links via social bio pages.
+**Admins**
+- Approve new leaders before their studies go public, which keeps spam out.
+- Add campuses.
 
-### For Small Group Leaders (Outreach Workflow)
-- **Centralized Roster View:** Clean dashboard to monitor incoming sign-ups and manage group capacity in real time.
-- **Direct Outreach Triggers:** One-click links for SMS, WhatsApp, or email directly from the leader interface to eliminate contact delay.
-- **Status Tracking:** Visual markers for leaders to track who has been contacted, confirmed, or added to group threads.
+<p>
+  <img src="docs/screenshots/study-mobile.png" alt="Study page on a phone, with next meeting and join form" width="300">
+  &nbsp;
+  <img src="docs/screenshots/directory-mobile.png" alt="Directory on a phone, filtered to evening studies" width="300">
+</p>
 
----
+*Screenshots use the built-in sample data.*
 
-## Tech Stack & Architecture
+## Tech stack
 
-- **Frontend:** React / TypeScript / Tailwind CSS
-- **Backend & Database:** Supabase (PostgreSQL, Row-Level Security, Realtime subscriptions)
-- **Deployment & Hosting:** Vercel (Production CI/CD pipeline synced to `main`)
-- **Authentication:** Role-based access control for administrative leader management
+| | |
+|---|---|
+| App | Next.js 16 (App Router, Server Components, Server Actions), React 19, TypeScript |
+| Styling | Tailwind CSS v4, Lucide icons; mobile-first with light and dark themes |
+| Database & auth | Supabase: PostgreSQL with row-level security, passwordless email sign-in |
+| Email | Resend, from a verified custom domain |
+| Validation | Zod |
+| Hosting | Vercel, deploying automatically from `main`; Vercel Web Analytics |
 
----
+## Engineering highlights
 
-## Engineering Highlights & Design Decisions
+- **Access control lives in the database.** Postgres row-level security and column-level privileges decide what visitors, leaders, and admins can read and write. Leaders can only touch their own studies and can't approve themselves. Addresses and meeting links sit in a separate table that only the study's leaders can read. Visitors join through a single database function that validates the request, rate-limits it, and returns the private details. See [the migrations](supabase/migrations/).
+- **The security rules are tested.** `npm run test:db` applies every migration to an in-memory Postgres ([PGlite](https://pglite.dev)) and runs 45 checks of what each role can and can't do ([supabase/tests/rls.test.mjs](supabase/tests/rls.test.mjs)).
+- **Schedules handle time zones correctly.** Studies are stored as local wall-clock times per campus. The next meeting is computed across daylight-saving changes, handles every-other-week studies, and never lands before the first meeting ([lib/schedule.ts](lib/schedule.ts)). Calendar invites use recurring events ([lib/calendar.ts](lib/calendar.ts)).
+- **Joining never waits on anything else.** The leader's notification email is sent after the response goes back, using Next's `after()`, so a slow email service can't slow the visitor down ([lib/notify.ts](lib/notify.ts)).
+- **User input is treated as untrusted.** Visitor text is HTML-escaped in emails. Spreadsheet exports neutralize anything that could run as a formula. A hidden honeypot field catches form bots. Sign-in redirects only allow same-site paths.
+- **It runs with zero setup.** Without Supabase credentials, the app falls back to bundled sample data, so `npm run dev` works right after cloning.
 
-- **Conversion-Optimized UX:** Architected the student discovery flow with optimistic UI updates and minimal form validation steps, drastically lowering friction compared to traditional multi-step university club portals.
-- **Secure Data Access with RLS:** Configured PostgreSQL Row-Level Security (RLS) policies to ensure leaders can only view and manage leads specifically assigned to their group roster.
-- **Decoupled Architecture:** Built with modular UI components and reusable data hooks, allowing rapid campus-specific re-theming or database schema migrations.
+## Running locally
 
----
+```bash
+git clone https://github.com/Jacob-Qubain/bible-study-directory.git
+cd bible-study-directory
+npm install
+npm run dev          # http://localhost:3000, using sample data
+npm run test:db      # database security tests
+```
 
-## Local Development Setup
+To connect a real database, copy `.env.example` to `.env.local` with your Supabase project's URL and keys. Then apply `supabase/migrations/` in order (with `supabase db push` or the SQL editor), and optionally `supabase/seed.sql`. `.env.example` also documents the optional Resend settings for email.
 
-### Prerequisites
-- Node.js (v18+ recommended)
-- npm or pnpm
+## Project structure
 
-### Installation
+```
+app/
+  page.tsx                 Campus picker
+  [campus]/                A campus's directory
+  studies/[slug]/          Study page, join form, calendar invite
+  leader/                  Sign-in, dashboard, study editor, people, admin
+components/                Directory, filters, cards, form controls
+lib/                       Data access, schedules, filters, email, auth helpers
+supabase/                  Migrations, seed data, security tests
+proxy.ts                   Session refresh and sign-in guard for /leader
+```
 
-1. **Clone the repository:**
-   ```bash
-   git clone [https://github.com/your-username/find-a-bible-study.git](https://github.com/your-username/find-a-bible-study.git)
-   cd find-a-bible-study
+The roadmap and design notes are in [docs/PLAN.md](docs/PLAN.md).
