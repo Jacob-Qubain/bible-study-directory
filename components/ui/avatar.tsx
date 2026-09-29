@@ -1,7 +1,7 @@
 import type { Leader } from "@/lib/types";
 
 const TONES = [
-  "bg-[#e2ede8] text-[#2f5d50]",
+  "bg-[#e2edf8] text-[#1b5689]",
   "bg-[#f8e7dc] text-[#9a4522]",
   "bg-[#e8e4f3] text-[#4b3f7a]",
   "bg-[#f4eccb] text-[#6d5a12]",

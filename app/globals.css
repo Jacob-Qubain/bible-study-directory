@@ -1,34 +1,35 @@
 @import "tailwindcss";
 
-/* Warm, calm palette: cream paper, deep evergreen, terracotta highlights. */
+/* Calm blue from the logo, cool off-white paper, warm orange for "soon" and hospitality.
+   Every text/background pair here meets WCAG AA (4.5:1) in both themes. */
 :root {
-  --background: #faf6ef;
+  --background: #f6f8fb;
   --surface: #ffffff;
-  --surface-2: #f3ede3;
-  --ink: #1f2a24;
-  --muted: #5d6a62;
-  --line: #e6ddcf;
-  --accent: #2f5d50;
-  --accent-hover: #264d42;
+  --surface-2: #edf1f6;
+  --ink: #1a2633;
+  --muted: #566374;
+  --line: #dbe3ec;
+  --accent: #236aa6;
+  --accent-hover: #1b5689;
   --accent-ink: #ffffff;
-  --accent-soft: #e2ede8;
-  --warm: #b4532a;
+  --accent-soft: #e2edf8;
+  --warm: #a94d26;
   --warm-soft: #f8e7dc;
   --focus: #c8643b;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #141816;
-    --surface: #1c211e;
-    --surface-2: #232925;
-    --ink: #eef0ec;
-    --muted: #a3ada7;
-    --line: #2f3632;
-    --accent: #7fbfa9;
-    --accent-hover: #95cdb9;
-    --accent-ink: #0f1a16;
-    --accent-soft: #22342d;
+    --background: #10151b;
+    --surface: #17202a;
+    --surface-2: #1e2833;
+    --ink: #edf1f5;
+    --muted: #a1acb9;
+    --line: #2a3441;
+    --accent: #7db6e6;
+    --accent-hover: #98c6ec;
+    --accent-ink: #0b1824;
+    --accent-soft: #1a2d42;
     --warm: #f0a47f;
     --warm-soft: #3a2a22;
     --focus: #f0a47f;

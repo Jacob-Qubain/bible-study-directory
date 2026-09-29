@@ -57,13 +57,13 @@ export async function notifyLeadersOfInquiry(inquiry: NewInquiry) {
 
   const e = escapeHtml;
   const html = `
-<div style="font-family:system-ui,-apple-system,sans-serif;max-width:480px;color:#1f2a24;line-height:1.5">
+<div style="font-family:system-ui,-apple-system,sans-serif;max-width:480px;color:#1a2633;line-height:1.5">
   <p style="font-size:18px;margin:0 0 12px"><strong>${e(inquiry.name)}</strong> wants to come to <strong>${e(data.title)}</strong>.</p>
   ${contact.map((c) => `<p style="margin:4px 0">${c.label}: <a href="${e(c.href)}">${e(c.value)}</a></p>`).join("")}
-  ${inquiry.message ? `<blockquote style="margin:16px 0;padding-left:12px;border-left:3px solid #e6ddcf">${e(inquiry.message)}</blockquote>` : ""}
+  ${inquiry.message ? `<blockquote style="margin:16px 0;padding-left:12px;border-left:3px solid #dbe3ec">${e(inquiry.message)}</blockquote>` : ""}
   <p style="margin:16px 0">A quick hello today goes a long way.${inquiry.email ? " Just reply to this email to write back." : ""}</p>
-  <p><a href="${inbox}" style="display:inline-block;background:#2f5d50;color:#fff;padding:10px 18px;border-radius:999px;text-decoration:none">See everyone who reached out</a></p>
-  <p style="color:#5d6a62;font-size:13px">${e(SITE_NAME)}</p>
+  <p><a href="${inbox}" style="display:inline-block;background:#236aa6;color:#fff;padding:10px 18px;border-radius:999px;text-decoration:none">See everyone who reached out</a></p>
+  <p style="color:#566374;font-size:13px">${e(SITE_NAME)}</p>
 </div>`;
   const text = [
     `${inquiry.name} wants to come to ${data.title}.`,
@@ -128,13 +128,13 @@ export async function notifyCampusContactsOfRequest(request: StudyRequestInput) 
   ].filter(Boolean) as { label: string; value: string; href: string }[];
 
   const html = `
-<div style="font-family:system-ui,-apple-system,sans-serif;max-width:480px;color:#1f2a24;line-height:1.5">
+<div style="font-family:system-ui,-apple-system,sans-serif;max-width:480px;color:#1a2633;line-height:1.5">
   <p style="font-size:18px;margin:0 0 12px"><strong>${e(request.name)}</strong> is looking for a Bible study at ${e(data.name)}, but none fit their schedule.</p>
   <p style="margin:4px 0"><strong>Free:</strong> ${e(free)}</p>
   ${contact.map((c) => `<p style="margin:4px 0">${c.label}: <a href="${e(c.href)}">${e(c.value)}</a></p>`).join("")}
-  ${request.message ? `<blockquote style="margin:16px 0;padding-left:12px;border-left:3px solid #e6ddcf">${e(request.message)}</blockquote>` : ""}
-  <p><a href="${inbox}" style="display:inline-block;background:#2f5d50;color:#fff;padding:10px 18px;border-radius:999px;text-decoration:none">See everyone looking</a></p>
-  <p style="color:#5d6a62;font-size:13px">${e(SITE_NAME)}</p>
+  ${request.message ? `<blockquote style="margin:16px 0;padding-left:12px;border-left:3px solid #dbe3ec">${e(request.message)}</blockquote>` : ""}
+  <p><a href="${inbox}" style="display:inline-block;background:#236aa6;color:#fff;padding:10px 18px;border-radius:999px;text-decoration:none">See everyone looking</a></p>
+  <p style="color:#566374;font-size:13px">${e(SITE_NAME)}</p>
 </div>`;
   const text = [
     `${request.name} is looking for a Bible study at ${data.name}, but none fit their schedule.`,
