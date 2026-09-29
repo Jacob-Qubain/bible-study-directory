@@ -7,6 +7,7 @@ import { getInquiries, getMyStudies } from "@/lib/leader/queries";
 import { formatPhone } from "@/lib/phone";
 import { requestTime } from "@/lib/request-time";
 import { CopyNumbers } from "./copy-numbers";
+import { RemovePersonButton } from "./remove-button";
 import { StatusSelect } from "./status-select";
 
 export const metadata: Metadata = { title: "People" };
@@ -139,6 +140,7 @@ export default async function PeoplePage(props: PageProps<"/leader/people">) {
                       </a>
                     </>
                   )}
+                  <RemovePersonButton inquiryId={q.id} name={q.name} />
                 </div>
               </li>
             );

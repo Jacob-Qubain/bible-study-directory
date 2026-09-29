@@ -15,3 +15,13 @@ export async function updateInquiryStatus(inquiryId: string, formData: FormData)
   if (error) throw new Error(error.message);
   refresh();
 }
+
+export async function removeInquiry(inquiryId: string) {
+  const { supabase } = await requireLeader();
+  // RLS limits this to the leader's own studies. Asking for the deleted row
+  // back tells "removed" apart from "not allowed" (which deletes nothing).
+  const { data, error } = await supabase.from("inquiries").delete().eq("id", inquiryId).select("id");
+  if (error) throw new Error(error.message);
+  if (!data.length) throw new Error("That person couldn't be removed.");
+  refresh();
+}
