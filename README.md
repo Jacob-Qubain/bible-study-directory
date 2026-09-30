@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/logo.png" alt="Find a Bible Study logo" width="96">
+</p>
+
 # Find a Bible Study
 
 A campus Bible study directory where students find a study and join it in about ten seconds, with no account. Leaders get a dashboard to post their study and follow up with the people who want to come.
@@ -18,13 +22,13 @@ Finding a Bible study on campus usually means a club fair table, a stale group c
 - Each study shows when it meets next ("Tomorrow at 6:30pm"), what to expect, and who leads it.
 - Join with just a name and an email or phone number. The exact address or video link is revealed on joining, not published.
 - Add it to Google Calendar, or Apple/Outlook (a recurring `.ics` invite), or text the leader directly.
-- Nothing fits? Say when you're free, and the campus's missionaries get it.
+- Nothing fits? Say when you're free (pre-filled from the filters you tried), and the campus's missionaries reach out. Campuses without a contact send these to the admins.
 
 **Leaders**
 - Sign in with an emailed link; there are no passwords.
-- Post, edit, pause, and delete studies.
+- Post, edit, pause, and delete studies. "Write it for me" drafts the "What to expect" paragraph from the study's details.
 - Get an email for every new person, and reply straight to them.
-- See everyone who reached out, track their status, and text, call, or email them in one tap.
+- See everyone who reached out, track their status, text, call, or email them in one tap, and remove people from the list.
 - Export people to phone contacts (`.vcf`) or a spreadsheet (`.csv`), or copy all numbers to start a group chat.
 
 **Campus missionaries**
@@ -38,6 +42,11 @@ Finding a Bible study on campus usually means a club fair table, a stale group c
   <img src="docs/screenshots/study-mobile.png" alt="Study page on a phone, with next meeting and join form" width="300">
   &nbsp;
   <img src="docs/screenshots/directory-mobile.png" alt="Directory on a phone, filtered to evening studies" width="300">
+</p>
+<p>
+  <img src="docs/screenshots/no-fit-mobile.png" alt="The 'Nothing fits your schedule?' card, naming the campus contact" width="300">
+  &nbsp;
+  <img src="docs/screenshots/demand-grid.png" alt="Missionaries' grid of when students who are still looking are free" width="300">
 </p>
 
 *Screenshots use the built-in sample data.*
@@ -58,6 +67,7 @@ Finding a Bible study on campus usually means a club fair table, a stale group c
 - **Access control lives in the database.** Postgres row-level security and column-level privileges decide what visitors, leaders, and admins can read and write. Leaders can only touch their own studies and can't approve themselves. Addresses and meeting links sit in a separate table that only the study's leaders can read. Visitors join through a single database function that validates the request, rate-limits it, and returns the private details. See [the migrations](supabase/migrations/).
 - **The security rules are tested.** `npm run test:db` applies every migration to an in-memory Postgres ([PGlite](https://pglite.dev)) and runs 60 checks of what each role can and can't do ([supabase/tests/rls.test.mjs](supabase/tests/rls.test.mjs)).
 - **Schedules handle time zones correctly.** Studies are stored as local wall-clock times per campus. The next meeting is computed across daylight-saving changes, handles every-other-week studies, and never lands before the first meeting ([lib/schedule.ts](lib/schedule.ts)). Calendar invites use recurring events ([lib/calendar.ts](lib/calendar.ts)).
+- **Unmet demand becomes a plan.** When no study fits, students leave their availability instead of leaving. The missionaries' grid counts who's still looking in each day × time slot (a "flexible" student counts everywhere) and marks slots where a study already meets, so gaps worth a new study stand out ([lib/leader/requests.ts](lib/leader/requests.ts)).
 - **Joining never waits on anything else.** The leader's notification email is sent after the response goes back, using Next's `after()`, so a slow email service can't slow the visitor down ([lib/notify.ts](lib/notify.ts)).
 - **User input is treated as untrusted.** Visitor text is HTML-escaped in emails. Spreadsheet exports neutralize anything that could run as a formula. A hidden honeypot field catches form bots. Sign-in redirects only allow same-site paths.
 - **It runs with zero setup.** Without Supabase credentials, the app falls back to bundled sample data, so `npm run dev` works right after cloning.
