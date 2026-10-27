@@ -31,23 +31,15 @@ function fromLeaderRow(row: Row): LeaderStudy {
 
 /** Studies this leader leads (admins included — they only see their own here). */
 export async function getMyStudies(supabase: SupabaseClient, leaderId: string) {
-  const { data: links, error: linkError } = await supabase
-    .from("study_leaders")
-    .select("study_id")
-    .eq("leader_id", leaderId);
-  if (linkError) throw new Error(linkError.message);
-  const ids = links.map((l) => l.study_id as string);
-  if (!ids.length) return [];
-
+  // One round trip: the leader's links, each with its study embedded.
   const { data, error } = await supabase
-    .from("bible_studies")
-    .select(COLUMNS)
-    .in("id", ids)
-    .neq("status", "archived")
-    .order("day_of_week")
-    .order("start_time");
+    .from("study_leaders")
+    .select(`bible_studies ( ${COLUMNS} )`)
+    .eq("leader_id", leaderId);
   if (error) throw new Error(error.message);
-  return (data as unknown as Row[]).map(fromLeaderRow);
+  return (data as unknown as { bible_studies: Row | null }[])
+    .flatMap(({ bible_studies: row }) => (row && row.status !== "archived" ? [fromLeaderRow(row)] : []))
+    .toSorted((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime));
 }
 
 /**

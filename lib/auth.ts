@@ -20,7 +20,8 @@ export const getSession = cache(async () => {
   const findLeader = () =>
     supabase
       .from("leaders")
-      .select("id, name, photo_url, bio, public_phone, whatsapp, approved, is_admin")
+      // Campus roles come along in the same request (one round trip, not two).
+      .select("id, name, photo_url, bio, public_phone, whatsapp, approved, is_admin, campus_contacts ( campus_id )")
       .eq("auth_user_id", claims.sub)
       .maybeSingle();
   let { data: row, error } = await findLeader();
@@ -33,10 +34,6 @@ export const getSession = cache(async () => {
     if (error) throw new Error(error.message);
   }
 
-  const { data: contactRows } = row
-    ? await supabase.from("campus_contacts").select("campus_id").eq("leader_id", row.id)
-    : { data: [] };
-
   const leader: LeaderAccount | null = row && {
     id: row.id,
     name: row.name,
@@ -46,7 +43,7 @@ export const getSession = cache(async () => {
     whatsapp: row.whatsapp,
     approved: row.approved,
     isAdmin: row.is_admin,
-    contactCampusIds: (contactRows ?? []).map((c) => c.campus_id as string),
+    contactCampusIds: (row.campus_contacts ?? []).map((c: { campus_id: string }) => c.campus_id),
   };
   return { supabase, user: { id: claims.sub, email: String(claims.email ?? "") }, leader };
 });
