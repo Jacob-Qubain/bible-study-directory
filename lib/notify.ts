@@ -15,7 +15,25 @@ export interface NewInquiry {
 
 interface StudyWithLeaders {
   title: string;
-  study_leaders: { leaders: { name: string; auth_user_id: string | null } | null }[];
+  study_leaders: { leaders: { id: string; name: string; auth_user_id: string | null } | null }[];
+}
+
+type AdminClient = NonNullable<ReturnType<typeof getSupabaseAdmin>>;
+
+/**
+ * Where to reach these leaders: their sign-in email, or, for someone an admin
+ * listed who hasn't signed in yet, the email they were invited with.
+ */
+async function leaderEmails(admin: AdminClient, leaders: { id: string; auth_user_id: string | null }[]) {
+  const signedIn = await emailsFor(
+    admin,
+    leaders.flatMap((l) => (l.auth_user_id ? [l.auth_user_id] : [])),
+  );
+  const waiting = leaders.filter((l) => !l.auth_user_id).map((l) => l.id);
+  const { data: invites } = waiting.length
+    ? await admin.from("leader_invites").select("email").in("leader_id", waiting)
+    : { data: [] };
+  return [...new Set([...signedIn, ...(invites ?? []).map((i) => i.email as string)])];
 }
 
 /**
@@ -32,7 +50,7 @@ export async function notifyLeadersOfInquiry(inquiry: NewInquiry) {
 
   const { data, error } = await admin
     .from("bible_studies")
-    .select("title, study_leaders ( leaders ( name, auth_user_id ) )")
+    .select("title, study_leaders ( leaders ( id, name, auth_user_id ) )")
     .eq("id", inquiry.studyId)
     .single<StudyWithLeaders>();
   if (error) {
@@ -40,12 +58,10 @@ export async function notifyLeadersOfInquiry(inquiry: NewInquiry) {
     return;
   }
 
-  const leaders = data.study_leaders.flatMap(({ leaders: l }) => (l?.auth_user_id ? [l] : []));
-  const emails = (
-    await Promise.all(
-      leaders.map(async (l) => (await admin.auth.admin.getUserById(l.auth_user_id!)).data.user?.email),
-    )
-  ).filter((e): e is string => Boolean(e));
+  const emails = await leaderEmails(
+    admin,
+    data.study_leaders.flatMap(({ leaders: l }) => (l ? [l] : [])),
+  );
   if (!emails.length) return; // e.g. sample leaders with no sign-in
 
   const who = inquiry.name.split(/\s+/)[0];
@@ -82,7 +98,7 @@ export async function notifyLeadersOfInquiry(inquiry: NewInquiry) {
 }
 
 /** Sign-in emails for leader profiles (service role only). */
-async function emailsFor(admin: NonNullable<ReturnType<typeof getSupabaseAdmin>>, authUserIds: string[]) {
+async function emailsFor(admin: AdminClient, authUserIds: string[]) {
   const users = await Promise.all(authUserIds.map((id) => admin.auth.admin.getUserById(id)));
   return users.map((u) => u.data.user?.email).filter((e): e is string => Boolean(e));
 }
@@ -151,4 +167,56 @@ export async function notifyCampusContactsOfRequest(request: StudyRequestInput) 
     text,
     replyTo: request.email ?? undefined,
   });
+}
+
+interface ListedStudy {
+  title: string;
+  slug: string;
+  campuses: { name: string } | null;
+}
+
+/**
+ * Tells a leader an admin listed their study. Invited leaders (no account yet)
+ * learn that signing in with this email gives them the listing.
+ */
+export async function notifyLeaderOfListing(opts: { studyId: string; leaderId: string; adminName: string }) {
+  const admin = getSupabaseAdmin();
+  if (!admin) {
+    console.info("[notify] SUPABASE_SERVICE_ROLE_KEY not set; leader not told about listing.");
+    return;
+  }
+  const [{ data: study, error }, { data: leader }] = await Promise.all([
+    admin.from("bible_studies").select("title, slug, campuses ( name )").eq("id", opts.studyId).single<ListedStudy>(),
+    admin.from("leaders").select("id, name, auth_user_id").eq("id", opts.leaderId).single(),
+  ]);
+  if (error || !leader) {
+    console.error("[notify] listing lookup failed:", error?.message);
+    return;
+  }
+  const emails = await leaderEmails(admin, [leader]);
+  if (!emails.length) return;
+
+  const e = escapeHtml;
+  const first = String(leader.name).split(/\s+/)[0];
+  const page = `${SITE_URL}/studies/${study.slug}`;
+  const login = `${SITE_URL}/leader/login`;
+  const campus = study.campuses?.name ?? "your campus";
+  const html = `
+<div style="font-family:system-ui,-apple-system,sans-serif;max-width:480px;color:#1a2633;line-height:1.5">
+  <p style="font-size:18px;margin:0 0 12px">Hi ${e(first)}! ${e(opts.adminName)} listed <strong>${e(study.title)}</strong> on ${e(SITE_NAME)}, so students at ${e(campus)} can find it.</p>
+  <p style="margin:4px 0">When someone wants to come, you'll get an email with their name and how to reach them. Reply and say hi.</p>
+  <p style="margin:16px 0">To change the details, pause it, or see everyone who's interested, sign in with this email address. There's no password; we email you a link.</p>
+  <p><a href="${page}" style="display:inline-block;background:#236aa6;color:#fff;padding:10px 18px;border-radius:999px;text-decoration:none">See your study</a>
+     &nbsp; <a href="${login}" style="color:#236aa6">Sign in</a></p>
+  <p style="color:#566374;font-size:13px">${e(SITE_NAME)}</p>
+</div>`;
+  const text = [
+    `Hi ${first}! ${opts.adminName} listed ${study.title} on ${SITE_NAME}, so students at ${campus} can find it.`,
+    "When someone wants to come, you'll get an email with their name and how to reach them.",
+    "To change the details, pause it, or see everyone who's interested, sign in with this email address (no password; we email you a link).",
+    `\nSee your study: ${page}`,
+    `Sign in: ${login}`,
+  ].join("\n");
+
+  await sendEmail({ to: emails, subject: `${study.title} is now on ${SITE_NAME}`, html, text });
 }

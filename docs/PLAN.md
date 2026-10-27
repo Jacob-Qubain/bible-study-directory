@@ -121,6 +121,13 @@ area, text search), soonest-first cards, detail page, one-step join, Google/ICS 
 - `/leader/requests`: demand grid of when people are free vs. when studies meet, filterable list,
   status, text/call/email, copy numbers, remove.
 
+**Phase 2f: Growing adoption ✅**
+- Admins list a study for another leader (existing, or new by name + email). New people get an approved
+  profile plus a private `leader_invites` row; the first sign-in with that email claims it
+  (`claim_leader_invite()`). They're emailed about the listing and about every interested student,
+  even before signing in. Admin sees and edits all studies.
+- `/<campus>/flyer`: printable one-page QR flyer for each campus.
+
 **Phase 3: Reach**
 - PWA manifest + offline shell; "near me" sort (store lat/lng, PostGIS `earth_distance`).
 - Open Graph images per study for sharing; JSON-LD `Event` markup.

@@ -41,7 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           Skip to content
         </a>
-        <header className="border-b border-line bg-background/90 backdrop-blur">
+        <header className="border-b border-line bg-background/90 backdrop-blur print:hidden">
           <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
             <Link href="/" className="flex items-center gap-2 font-display text-lg font-semibold">
               <BookOpen className="size-5 text-accent" aria-hidden />
@@ -55,7 +55,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main id="main" className="flex-1">
           {children}
         </main>
-        <footer className="grid justify-items-center gap-3 border-t border-line px-4 py-8 text-center text-sm text-muted">
+        <footer className="grid justify-items-center gap-3 border-t border-line px-4 py-8 text-center text-sm text-muted print:hidden">
           <p>Everyone is welcome. Come as you are.</p>
           <a
             href={FEEDBACK_URL}

@@ -21,6 +21,11 @@ export interface StudyFormValues {
   food: FoodProvided;
   capacity: string;
   tags: string[];
+  // Admin only, when creating: who leads it.
+  leaderMode: "me" | "existing" | "new";
+  leaderId: string;
+  newLeaderName: string;
+  newLeaderEmail: string;
 }
 
 export type StudyFieldErrors = Partial<Record<keyof StudyFormValues, string>>;
@@ -43,6 +48,10 @@ export const EMPTY_STUDY: StudyFormValues = {
   food: "none",
   capacity: "",
   tags: [],
+  leaderMode: "me",
+  leaderId: "",
+  newLeaderName: "",
+  newLeaderEmail: "",
 };
 
 export function readStudyForm(formData: FormData): StudyFormValues {
@@ -65,6 +74,10 @@ export function readStudyForm(formData: FormData): StudyFormValues {
     food: s("food") as FoodProvided,
     capacity: s("capacity"),
     tags: formData.getAll("tags").map(String),
+    leaderMode: (["existing", "new"].includes(s("leaderMode")) ? s("leaderMode") : "me") as StudyFormValues["leaderMode"],
+    leaderId: s("leaderId"),
+    newLeaderName: s("newLeaderName"),
+    newLeaderEmail: s("newLeaderEmail"),
   };
 }
 
@@ -182,5 +195,9 @@ export function studyToFormValues(
     food: study.food,
     capacity: study.capacity ? String(study.capacity) : "",
     tags: study.tags.map((t) => t.slug),
+    leaderMode: "me",
+    leaderId: "",
+    newLeaderName: "",
+    newLeaderEmail: "",
   };
 }

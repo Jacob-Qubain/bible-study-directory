@@ -2,6 +2,8 @@
 
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { z } from "zod";
 import { requireLeader } from "@/lib/auth";
 import {
   parseStudyForm,
@@ -12,6 +14,7 @@ import {
   type StudyFormValues,
 } from "@/lib/leader/study-form";
 import { getEditableStudy } from "@/lib/leader/queries";
+import { notifyLeaderOfListing } from "@/lib/notify";
 
 export type StudyFormState =
   | { status: "idle" }
@@ -57,8 +60,38 @@ export async function saveStudy(
   const row = toStudyRow(parsed.data, campus.timezone);
   let id = studyId;
 
+  // Admins can list a new study for someone else: an existing leader, or a
+  // new person by name + email (who claims it when they first sign in).
+  let leadBy: string | null = null;
+  if (!studyId && leader.isAdmin && values.leaderMode !== "me") {
+    const fields: StudyFieldErrors = {};
+    if (values.leaderMode === "existing") {
+      const { data: chosen } = z.uuid().safeParse(values.leaderId).success
+        ? await supabase.from("leaders").select("id").eq("id", values.leaderId).maybeSingle()
+        : { data: null };
+      if (chosen) leadBy = chosen.id;
+      else fields.leaderId = "Choose who leads it.";
+    } else {
+      const name = values.newLeaderName.trim();
+      const email = z.email().safeParse(values.newLeaderEmail.trim());
+      if (!name) fields.newLeaderName = "Add their name.";
+      if (!email.success) fields.newLeaderEmail = "Add their email so they can sign in and manage it.";
+      if (name && email.success) {
+        const { data: invited, error } = await supabase.rpc("admin_invite_leader", {
+          p_name: name,
+          p_email: email.data,
+        });
+        if (error) return fail(error);
+        leadBy = invited as string;
+      }
+    }
+    if (Object.keys(fields).length) {
+      return { status: "error", message: "A few things need a look.", fields, values };
+    }
+  }
+
   if (id) {
-    if (!(await getEditableStudy(supabase, id, leader.id))) redirect("/leader");
+    if (!(await getEditableStudy(supabase, id, leader))) redirect("/leader");
     const { error } = await supabase.from("bible_studies").update(row).eq("id", id);
     if (error) return fail(error);
   } else {
@@ -94,12 +127,24 @@ export async function saveStudy(
     if (error) return fail(error);
   }
 
+  if (leadBy && leadBy !== leader.id) {
+    // The insert trigger made the admin its leader; hand it to the real one.
+    const { error: assignError } = await supabase
+      .from("study_leaders")
+      .insert({ study_id: id, leader_id: leadBy, role: "leader" });
+    if (assignError) return fail(assignError);
+    await supabase.from("study_leaders").delete().eq("study_id", id).eq("leader_id", leader.id);
+    const listed = { studyId: id, leaderId: leadBy, adminName: leader.name };
+    after(() => notifyLeaderOfListing(listed));
+    redirect(`/leader/admin?listed=${id}`);
+  }
+
   redirect(`/leader?saved=${id}`);
 }
 
 export async function setStudyStatus(studyId: string, status: "active" | "paused") {
   const { supabase, leader } = await requireLeader();
-  if (!(await getEditableStudy(supabase, studyId, leader.id))) return;
+  if (!(await getEditableStudy(supabase, studyId, leader))) return;
   const { error } = await supabase.from("bible_studies").update({ status }).eq("id", studyId);
   if (error) throw new Error(error.message);
   refresh();
@@ -107,7 +152,7 @@ export async function setStudyStatus(studyId: string, status: "active" | "paused
 
 export async function deleteStudy(studyId: string) {
   const { supabase, leader } = await requireLeader();
-  if (!(await getEditableStudy(supabase, studyId, leader.id))) redirect("/leader");
+  if (!(await getEditableStudy(supabase, studyId, leader))) redirect("/leader");
   const { error } = await supabase.from("bible_studies").delete().eq("id", studyId);
   if (error) throw new Error(error.message);
   redirect("/leader");

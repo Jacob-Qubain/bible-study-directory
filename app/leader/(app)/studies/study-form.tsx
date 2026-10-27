@@ -16,6 +16,9 @@ function durationLabel(m: number) {
   return m < 60 ? `${m} min` : `${m / 60} hr${m > 60 ? "s" : ""}`.replace(".5", "½");
 }
 
+const radioPill =
+  "inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-full border border-line px-4 text-sm font-medium has-[:checked]:border-accent has-[:checked]:bg-accent has-[:checked]:text-accent-ink has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[var(--focus)]";
+
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <fieldset className="grid gap-5 rounded-2xl border border-line bg-surface p-5 sm:p-6">
@@ -37,11 +40,14 @@ export function StudyForm({
   initial,
   tags,
   campuses,
+  leaderOptions,
 }: {
   studyId: string | null;
   initial: StudyFormValues;
   tags: Tag[];
   campuses: Campus[];
+  /** Admins creating a study can list it for someone else. */
+  leaderOptions?: { id: string; name: string }[];
 }) {
   const [state, action, pending] = useActionState<StudyFormState, FormData>(
     saveStudy.bind(null, studyId),
@@ -50,6 +56,7 @@ export function StudyForm({
   const values = state.status === "error" ? state.values : initial;
   const errors = state.status === "error" ? state.fields : {};
   const [format, setFormat] = useState<StudyFormat>(values.format);
+  const [leaderMode, setLeaderMode] = useState(values.leaderMode);
   const formRef = useRef<HTMLFormElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
@@ -69,6 +76,70 @@ export function StudyForm({
   return (
     <form ref={formRef} action={action} className="grid gap-6" noValidate>
       {state.status === "error" && <Notice tone="warn">{state.message}</Notice>}
+
+      {leaderOptions && (
+        <Section title="Who leads it?">
+          <div role="radiogroup" aria-label="Who leads it" className="flex flex-wrap gap-2">
+            {(
+              [
+                ["me", "Me"],
+                ["existing", "An existing leader"],
+                ["new", "Someone new"],
+              ] as const
+            ).map(([value, label]) => (
+              <label key={value} className={radioPill}>
+                <input
+                  type="radio"
+                  name="leaderMode"
+                  value={value}
+                  checked={leaderMode === value}
+                  onChange={() => setLeaderMode(value)}
+                  className="sr-only"
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+          {leaderMode === "existing" && (
+            <Field id="leaderId" label="Leader" error={errors.leaderId}>
+              <Select {...input("leaderId")} defaultValue={values.leaderId}>
+                <option value="">Choose a leader…</option>
+                {leaderOptions.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          )}
+          {leaderMode === "new" && (
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Field id="newLeaderName" label="Their name" error={errors.newLeaderName}>
+                <input {...input("newLeaderName")} defaultValue={values.newLeaderName} autoComplete="off" />
+              </Field>
+              <Field
+                id="newLeaderEmail"
+                label="Their email"
+                error={errors.newLeaderEmail}
+                hint="We'll email them that it's listed. Signing in with this email makes it theirs."
+              >
+                <input
+                  {...input("newLeaderEmail", true)}
+                  type="email"
+                  autoComplete="off"
+                  defaultValue={values.newLeaderEmail}
+                />
+              </Field>
+            </div>
+          )}
+          {leaderMode !== "me" && (
+            <p className="text-sm text-muted">
+              It goes live under their name right away, and they get an email for everyone who wants to
+              come.
+            </p>
+          )}
+        </Section>
+      )}
 
       <Section title="The basics">
         <Field id="title" label="Name" error={errors.title}>
@@ -140,7 +211,7 @@ export function StudyForm({
           {(Object.entries(FORMAT_LABELS) as [StudyFormat, string][]).map(([value, label]) => (
             <label
               key={value}
-              className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-full border border-line px-4 text-sm font-medium has-[:checked]:border-accent has-[:checked]:bg-accent has-[:checked]:text-accent-ink has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[var(--focus)]"
+              className={radioPill}
             >
               <input
                 type="radio"

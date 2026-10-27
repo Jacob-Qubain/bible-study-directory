@@ -50,15 +50,24 @@ export async function getMyStudies(supabase: SupabaseClient, leaderId: string) {
   return (data as unknown as Row[]).map(fromLeaderRow);
 }
 
-/** A study the signed-in leader may edit, or null (RLS hides everyone else's). */
-export async function getEditableStudy(supabase: SupabaseClient, id: string, leaderId: string) {
-  const { data: link } = await supabase
-    .from("study_leaders")
-    .select("study_id")
-    .eq("study_id", id)
-    .eq("leader_id", leaderId)
-    .maybeSingle();
-  if (!link) return null;
+/**
+ * A study the signed-in leader may edit (one they lead, or any study for an
+ * admin), or null. RLS enforces the same rule in the database.
+ */
+export async function getEditableStudy(
+  supabase: SupabaseClient,
+  id: string,
+  leader: { id: string; isAdmin: boolean },
+) {
+  if (!leader.isAdmin) {
+    const { data: link } = await supabase
+      .from("study_leaders")
+      .select("study_id")
+      .eq("study_id", id)
+      .eq("leader_id", leader.id)
+      .maybeSingle();
+    if (!link) return null;
+  }
 
   const { data, error } = await supabase.from("bible_studies").select(COLUMNS).eq("id", id).maybeSingle();
   if (error) throw new Error(error.message);

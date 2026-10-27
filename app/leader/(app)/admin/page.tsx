@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Check, Trash2, Undo2, UserPlus, X } from "lucide-react";
-import { buttonClass, inputClass, Select } from "@/components/ui/field";
+import { Check, Pencil, Plus, Printer, Trash2, Undo2, UserPlus, X } from "lucide-react";
+import { buttonClass, inputClass, Notice, Select } from "@/components/ui/field";
 import { requireAdmin } from "@/lib/auth";
 import { setApproval } from "./actions";
 import { addCampusContact, removeCampus, removeCampusContact } from "./campus-actions";
@@ -18,16 +18,32 @@ interface AdminLeaderRow {
   study_count: number;
 }
 
-export default async function AdminPage() {
+interface AdminStudyRow {
+  id: string;
+  slug: string;
+  title: string;
+  status: "active" | "paused" | "archived";
+  campuses: { name: string } | null;
+  study_leaders: { leaders: { name: string; auth_user_id: string | null } | null }[];
+}
+
+export default async function AdminPage(props: PageProps<"/leader/admin">) {
   const { supabase, leader: me } = await requireAdmin();
-  const [leaderResult, campusResult, studyResult, contactResult] = await Promise.all([
+  const { listed } = await props.searchParams;
+  const [leaderResult, campusResult, studyResult, contactResult, allStudies] = await Promise.all([
     supabase.rpc("admin_list_leaders"),
     supabase.from("campuses").select("id, slug, name, city").order("name"),
     // Admins can see every study, listed or not.
     supabase.from("bible_studies").select("campus_id"),
     supabase.from("campus_contacts").select("campus_id, leader_id, leaders ( name )").order("sort_order"),
+    supabase
+      .from("bible_studies")
+      .select("id, slug, title, status, campuses ( name ), study_leaders ( leaders ( name, auth_user_id ) )")
+      .neq("status", "archived")
+      .order("title"),
   ]);
-  const error = leaderResult.error ?? campusResult.error ?? studyResult.error ?? contactResult.error;
+  const error =
+    leaderResult.error ?? campusResult.error ?? studyResult.error ?? contactResult.error ?? allStudies.error;
   if (error) throw new Error(error.message);
   const leaders = leaderResult.data as AdminLeaderRow[];
   const campuses = campusResult.data!.map((c) => ({
@@ -41,6 +57,8 @@ export default async function AdminPage() {
       }[]
     ).filter((k) => k.campus_id === c.id),
   }));
+  const studies = allStudies.data as unknown as AdminStudyRow[];
+  const listedStudy = studies.find((st) => st.id === listed);
   const pending = leaders.filter((l) => !l.approved);
   const approved = leaders.filter((l) => l.approved);
 
@@ -88,6 +106,69 @@ export default async function AdminPage() {
           <p className="text-muted">All caught up.</p>
         )}
       </section>
+      {listedStudy && (
+        <Notice>
+          Listed “{listedStudy.title}”. We emailed{" "}
+          {listedStudy.study_leaders.map((sl) => sl.leaders?.name).filter(Boolean).join(" & ")} to let them know.{" "}
+          <Link href={`/studies/${listedStudy.slug}`} className="font-semibold text-accent underline">
+            See it live
+          </Link>
+        </Notice>
+      )}
+
+      <section className="grid gap-3" aria-labelledby="studies-heading">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="grid gap-1">
+            <h2 id="studies-heading" className="font-display text-xl font-semibold">
+              All studies ({studies.length})
+            </h2>
+            <p className="text-sm text-muted">
+              Including ones you listed for other leaders. &ldquo;Invite sent&rdquo; means they
+              haven&apos;t signed in yet; they still get an email for everyone who wants to come.
+            </p>
+          </div>
+          <Link href="/leader/studies/new" className={buttonClass.primary}>
+            <Plus className="size-4" aria-hidden />
+            List a study for someone
+          </Link>
+        </div>
+        <ul className="grid gap-2">
+          {studies.map((st) => {
+            const waiting = st.study_leaders.some((sl) => sl.leaders && !sl.leaders.auth_user_id);
+            return (
+              <li
+                key={st.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-4"
+              >
+                <div className="grid gap-0.5">
+                  <p className="font-semibold">
+                    {st.title}
+                    {st.status === "paused" && (
+                      <span className="ml-2 rounded-full bg-surface-2 px-2 py-0.5 text-xs font-semibold text-muted">
+                        Paused
+                      </span>
+                    )}
+                    {waiting && (
+                      <span className="ml-2 rounded-full bg-warm-soft px-2 py-0.5 text-xs font-semibold text-warm">
+                        Invite sent
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-sm text-muted">
+                    {st.study_leaders.map((sl) => sl.leaders?.name).filter(Boolean).join(" & ") || "No leader"}
+                    {st.campuses && ` · ${st.campuses.name}`}
+                  </p>
+                </div>
+                <Link href={`/leader/studies/${st.id}`} className={buttonClass.secondary}>
+                  <Pencil className="size-4" aria-hidden />
+                  Edit
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
       <section className="grid gap-3" aria-labelledby="campuses-heading">
         <h2 id="campuses-heading" className="font-display text-xl font-semibold">
           Campuses ({campuses.length})
@@ -111,6 +192,10 @@ export default async function AdminPage() {
                   {c.city && ` · ${c.city}`} · {c.studies} {c.studies === 1 ? "study" : "studies"}
                 </p>
               </div>
+              <a href={`/${c.slug}/flyer`} target="_blank" rel="noreferrer" className={buttonClass.secondary}>
+                <Printer className="size-4" aria-hidden />
+                Flyer
+              </a>
               {c.studies === 0 && (
                 <form action={removeCampus.bind(null, c.id)}>
                   <button type="submit" className={`${buttonClass.quiet} text-warm hover:text-warm`}>

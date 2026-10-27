@@ -20,8 +20,10 @@ await db.exec(`
   create table auth.users (id uuid primary key, email text);
   create function auth.uid() returns uuid language sql stable as
     $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
+  create function auth.email() returns text language sql stable as
+    $$ select nullif(current_setting('request.jwt.claim.email', true), '') $$;
   grant usage on schema auth to anon, authenticated;
-  grant execute on function auth.uid() to anon, authenticated;
+  grant execute on function auth.uid(), auth.email() to anon, authenticated;
 `);
 
 // ── The original prototype tables, to prove the reset migration clears them ──
@@ -43,8 +45,8 @@ for (const f of [...migrations.map((m) => `migrations/${m}`), "seed.sql"]) {
 }
 
 let failures = 0;
-async function as(role, sub, sql, params) {
-  await db.exec(`reset role; set request.jwt.claim.sub = '${sub ?? ""}'; set role ${role};`);
+async function as(role, sub, sql, params, email = "") {
+  await db.exec(`reset role; set request.jwt.claim.sub = '${sub ?? ""}'; set request.jwt.claim.email = '${email}'; set role ${role};`);
   try {
     return await db.query(sql, params);
   } finally {
@@ -186,6 +188,45 @@ await expect("…but can't rewrite what the student said", () =>
   as("authenticated", U3, "update study_requests set name = 'x' where name = 'Casey'"), (_r, e) => !!e);
 await expect("the contact can remove a request", () =>
   as("authenticated", U3, "delete from study_requests where name = 'Casey' returning id"), (r) => rows(r) === 1);
+
+console.log("\n— Listing a study for someone else —");
+const NEWBIE = "55555555-5555-4555-8555-555555555555"; // invited, signs in later
+await expect("leaders can't invite leaders", () =>
+  as("authenticated", U1, "select admin_invite_leader('X', 'x@example.com')"), (_r, e) => e?.message.includes("Admins only"));
+await expect("visitors can't invite leaders", () =>
+  as("anon", null, "select admin_invite_leader('X', 'x@example.com')"), (_r, e) => !!e);
+let invitedId;
+await expect("admin invites someone with no account", async () => {
+  const r = await as("authenticated", U2, "select admin_invite_leader('Riley New', 'Riley@Example.com') id");
+  invitedId = r.rows[0].id;
+  return r;
+}, (r) => !!r?.rows[0]?.id);
+await expect("inviting the same email again reuses the profile", () =>
+  as("authenticated", U2, "select admin_invite_leader('Riley New', 'riley@example.com') id"), (r) => r?.rows[0]?.id === invitedId);
+await expect("the invited profile is approved and public", () =>
+  as("anon", null, "select name from leaders where id = $1", [invitedId]), (r) => r?.rows[0]?.name === "Riley New");
+await expect("invite emails are private from visitors", () => as("anon", null, "select * from leader_invites"), (r, e) => rows(r) === 0 || !!e);
+await expect("…and from regular leaders", () => as("authenticated", U1, "select * from leader_invites"), (r) => rows(r) === 0);
+await expect("admins can see invites", () => as("authenticated", U2, "select email from leader_invites"), (r) => r?.rows.some((x) => x.email === "riley@example.com"));
+await expect("admin assigns a study to the invited leader", async () => {
+  await as("authenticated", U2, "insert into study_leaders (study_id, leader_id) values ($1, $2)", [NEW, invitedId]);
+  return as("authenticated", U2, "delete from study_leaders where study_id = $1 and leader_id = (select id from leaders where auth_user_id = $2) returning 1", [NEW, U2]);
+}, (_r, e) => !e);
+await expect("someone else can't claim the invite", async () => {
+  await db.exec(`insert into auth.users values ('66666666-6666-4666-8666-666666666666', 'other@example.com')`);
+  return as("authenticated", "66666666-6666-4666-8666-666666666666", "select claim_leader_invite() id", [], "other@example.com");
+}, (r) => r?.rows[0]?.id === null);
+await expect("the invited person signs in and claims their profile", async () => {
+  await db.exec(`insert into auth.users values ('${NEWBIE}', 'riley@example.com')`);
+  return as("authenticated", NEWBIE, "select claim_leader_invite() id", [], "riley@example.com");
+}, (r) => r?.rows[0]?.id === invitedId);
+await expect("…and now leads the study", () =>
+  as("authenticated", NEWBIE, "select id from bible_studies where id = $1", [NEW]), (r) => rows(r) === 1);
+await expect("the invite is used up", () => db.query("select count(*)::int n from leader_invites where email = 'riley@example.com'"), (r) => r?.rows[0]?.n === 0);
+const u1Leader = (await db.query("select id from leaders where auth_user_id = $1", [U1])).rows[0].id;
+await expect("inviting an existing account links straight to it", () =>
+  as("authenticated", U2, "select admin_invite_leader('Someone', 'newleader@example.com') id"),
+  (r) => r?.rows[0]?.id === u1Leader);
 
 console.log(`\n${failures ? `${failures} FAILED` : "All checks passed"}`);
 process.exit(failures ? 1 : 0);

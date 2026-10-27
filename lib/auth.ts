@@ -17,12 +17,21 @@ export const getSession = cache(async () => {
   const claims = data?.claims;
   if (!claims) return { supabase, user: null, leader: null };
 
-  const { data: row, error } = await supabase
-    .from("leaders")
-    .select("id, name, photo_url, bio, public_phone, whatsapp, approved, is_admin")
-    .eq("auth_user_id", claims.sub)
-    .maybeSingle();
+  const findLeader = () =>
+    supabase
+      .from("leaders")
+      .select("id, name, photo_url, bio, public_phone, whatsapp, approved, is_admin")
+      .eq("auth_user_id", claims.sub)
+      .maybeSingle();
+  let { data: row, error } = await findLeader();
   if (error) throw new Error(error.message);
+  if (!row) {
+    // An admin may have listed a study for this email before they ever signed
+    // in; if so, that profile (and its studies) becomes theirs now.
+    const { data: claimed } = await supabase.rpc("claim_leader_invite");
+    if (claimed) ({ data: row, error } = await findLeader());
+    if (error) throw new Error(error.message);
+  }
 
   const { data: contactRows } = row
     ? await supabase.from("campus_contacts").select("campus_id").eq("leader_id", row.id)

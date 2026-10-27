@@ -13,7 +13,7 @@ export default async function EditStudyPage(props: PageProps<"/leader/studies/[i
   const { id } = await props.params;
   const { supabase, leader } = await requireLeader();
   const [study, tags, campuses] = await Promise.all([
-    getEditableStudy(supabase, id, leader.id),
+    getEditableStudy(supabase, id, leader),
     getAllTags(supabase),
     getCampuses(),
   ]);

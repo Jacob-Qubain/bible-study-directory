@@ -70,3 +70,13 @@ body {
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Printing (e.g. campus flyers): plain white page, small margins. */
+@media print {
+  @page {
+    margin: 0.4in;
+  }
+  body {
+    background: #ffffff;
+  }
+}
