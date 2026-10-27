@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { LogOut } from "lucide-react";
 import { buttonClass } from "@/components/ui/field";
 import { requireUser } from "@/lib/auth";
 import { signOut } from "../login/actions";
+import { NavLinks } from "./nav-links";
 
 export default async function LeaderLayout({ children }: LayoutProps<"/leader">) {
   const { user, leader } = await requireUser();
@@ -25,11 +25,7 @@ export default async function LeaderLayout({ children }: LayoutProps<"/leader">)
         aria-label="Leader"
         className="flex flex-wrap items-center gap-x-1 gap-y-2 border-b border-line pb-4"
       >
-        {links.map((l) => (
-          <Link key={l.href} href={l.href} className={buttonClass.quiet}>
-            {l.label}
-          </Link>
-        ))}
+        <NavLinks links={links} />
         <span className="ml-auto hidden text-sm text-muted sm:inline">{user.email}</span>
         <form action={signOut}>
           <button type="submit" className={buttonClass.quiet}>
