@@ -73,6 +73,25 @@ Finding a Bible study on campus usually means a club fair table, a stale group c
 - **User input is treated as untrusted.** Visitor text is HTML-escaped in emails. Spreadsheet exports neutralize anything that could run as a formula. A hidden honeypot field catches form bots. Sign-in redirects only allow same-site paths.
 - **It runs with zero setup.** Without Supabase credentials, the app falls back to bundled sample data, so `npm run dev` works right after cloning.
 
+## Public API
+
+Other sites can show live studies. Responses are JSON, readable from any origin (CORS), and cached for
+5 minutes. Only public details are included: never addresses, meeting links, emails, or phone numbers.
+Each study's `url` links back to its page, where people join.
+
+| Endpoint | Returns |
+|---|---|
+| `GET /api/v1/campuses` | Campuses with at least one live study |
+| `GET /api/v1/studies` | Every live study, soonest next meeting first |
+| `GET /api/v1/studies?campus=<slug>` | Live studies for one campus (404 if the campus doesn't exist) |
+
+```js
+const res = await fetch("https://findabiblestudy.org/api/v1/studies?campus=tulsa-university");
+const { studies } = await res.json();
+// studies[0] → { title, summary, url, schedule: { label: "Thursdays · 5pm", nextMeeting, … },
+//               location: { name, area }, format, leaders: [{ name, photoUrl }], audience, focus, … }
+```
+
 ## Running locally
 
 ```bash
