@@ -16,8 +16,53 @@ function durationLabel(m: number) {
   return m < 60 ? `${m} min` : `${m / 60} hr${m > 60 ? "s" : ""}`.replace(".5", "½");
 }
 
-const radioPill =
-  "inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-full border border-line px-4 text-sm font-medium has-[:checked]:border-accent has-[:checked]:bg-accent has-[:checked]:text-accent-ink has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-[var(--focus)]";
+/**
+ * Pick-one pills. Deliberately not <input type="radio">: React resets a form
+ * after each action, which flips controlled radios back to their first value
+ * while state says otherwise. The choice is submitted from state instead.
+ */
+function PillChoice<T extends string>({
+  name,
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  name: string;
+  label: string;
+  options: readonly (readonly [T, string])[];
+  value: T;
+  onChange: (value: T) => void;
+}) {
+  return (
+    <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2">
+      <input type="hidden" name={name} value={value} />
+      {options.map(([option, text]) => (
+        <button
+          key={option}
+          type="button"
+          role="radio"
+          aria-checked={value === option}
+          onClick={() => onChange(option)}
+          className={`inline-flex min-h-10 items-center rounded-full border px-4 text-sm font-medium transition-colors ${
+            value === option
+              ? "border-accent bg-accent text-accent-ink"
+              : "border-line hover:border-accent/50 hover:bg-accent-soft"
+          }`}
+        >
+          {text}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const LEADER_MODES = [
+  ["me", "Me"],
+  ["existing", "An existing leader"],
+  ["new", "Someone new"],
+] as const;
+const FORMATS = Object.entries(FORMAT_LABELS) as [StudyFormat, string][];
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -79,27 +124,13 @@ export function StudyForm({
 
       {leaderOptions && (
         <Section title="Who leads it?">
-          <div role="radiogroup" aria-label="Who leads it" className="flex flex-wrap gap-2">
-            {(
-              [
-                ["me", "Me"],
-                ["existing", "An existing leader"],
-                ["new", "Someone new"],
-              ] as const
-            ).map(([value, label]) => (
-              <label key={value} className={radioPill}>
-                <input
-                  type="radio"
-                  name="leaderMode"
-                  value={value}
-                  checked={leaderMode === value}
-                  onChange={() => setLeaderMode(value)}
-                  className="sr-only"
-                />
-                {label}
-              </label>
-            ))}
-          </div>
+          <PillChoice
+            name="leaderMode"
+            label="Who leads it"
+            options={LEADER_MODES}
+            value={leaderMode}
+            onChange={setLeaderMode}
+          />
           {leaderMode === "existing" && (
             <Field id="leaderId" label="Leader" error={errors.leaderId}>
               <Select {...input("leaderId")} defaultValue={values.leaderId}>
@@ -207,24 +238,7 @@ export function StudyForm({
           </Select>
         </Field>
 
-        <div role="radiogroup" aria-label="Format" className="flex flex-wrap gap-2">
-          {(Object.entries(FORMAT_LABELS) as [StudyFormat, string][]).map(([value, label]) => (
-            <label
-              key={value}
-              className={radioPill}
-            >
-              <input
-                type="radio"
-                name="format"
-                value={value}
-                checked={format === value}
-                onChange={() => setFormat(value)}
-                className="sr-only"
-              />
-              {label}
-            </label>
-          ))}
-        </div>
+        <PillChoice name="format" label="Format" options={FORMATS} value={format} onChange={setFormat} />
 
         <div className="grid gap-5 sm:grid-cols-2">
           <Field

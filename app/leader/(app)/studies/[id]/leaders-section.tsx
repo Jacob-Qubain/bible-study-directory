@@ -90,7 +90,9 @@ export function LeadersSection({
           <Select
             id="leaderId"
             name="leaderId"
-            value={choice}
+            // Uncontrolled on purpose: after an action React resets the form to
+            // defaultValue, which is what was just submitted, matching `choice`.
+            defaultValue={values?.leaderId ?? ""}
             onChange={(e) => setChoice(e.target.value)}
           >
             <option value="">Choose a leader…</option>
