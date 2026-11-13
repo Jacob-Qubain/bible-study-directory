@@ -21,19 +21,26 @@ interface StudyWithLeaders {
 type AdminClient = NonNullable<ReturnType<typeof getSupabaseAdmin>>;
 
 /**
- * Where to reach these leaders: their sign-in email, or, for someone an admin
- * listed who hasn't signed in yet, the email they were invited with.
+ * Where to reach these leaders. In order of preference: the notification
+ * email they chose on their profile; their sign-in email; or, for someone an
+ * admin listed who hasn't signed in yet, the email they were invited with.
  */
 async function leaderEmails(admin: AdminClient, leaders: { id: string; auth_user_id: string | null }[]) {
-  const signedIn = await emailsFor(
-    admin,
-    leaders.flatMap((l) => (l.auth_user_id ? [l.auth_user_id] : [])),
+  if (!leaders.length) return [];
+  const ids = leaders.map((l) => l.id);
+  const [{ data: settings }, { data: invites }] = await Promise.all([
+    admin.from("leader_settings").select("leader_id, notify_email").in("leader_id", ids),
+    admin.from("leader_invites").select("leader_id, email").in("leader_id", ids),
+  ]);
+  const emails = await Promise.all(
+    leaders.map(async (l) => {
+      const chosen = settings?.find((x) => x.leader_id === l.id)?.notify_email as string | null | undefined;
+      if (chosen) return chosen;
+      if (l.auth_user_id) return (await admin.auth.admin.getUserById(l.auth_user_id)).data.user?.email;
+      return invites?.find((i) => i.leader_id === l.id)?.email as string | undefined;
+    }),
   );
-  const waiting = leaders.filter((l) => !l.auth_user_id).map((l) => l.id);
-  const { data: invites } = waiting.length
-    ? await admin.from("leader_invites").select("email").in("leader_id", waiting)
-    : { data: [] };
-  return [...new Set([...signedIn, ...(invites ?? []).map((i) => i.email as string)])];
+  return [...new Set(emails.filter((e): e is string => Boolean(e)))];
 }
 
 /**
@@ -97,16 +104,10 @@ export async function notifyLeadersOfInquiry(inquiry: NewInquiry) {
   });
 }
 
-/** Sign-in emails for leader profiles (service role only). */
-async function emailsFor(admin: AdminClient, authUserIds: string[]) {
-  const users = await Promise.all(authUserIds.map((id) => admin.auth.admin.getUserById(id)));
-  return users.map((u) => u.data.user?.email).filter((e): e is string => Boolean(e));
-}
-
 interface CampusWithContacts {
   name: string;
   slug: string;
-  campus_contacts: { leaders: { auth_user_id: string | null } | null }[];
+  campus_contacts: { leaders: { id: string; auth_user_id: string | null } | null }[];
 }
 
 /** Emails a campus's contacts (or the admins, if it has none) when no study fits a student. */
@@ -118,20 +119,20 @@ export async function notifyCampusContactsOfRequest(request: StudyRequestInput) 
   }
   const { data, error } = await admin
     .from("campuses")
-    .select("name, slug, campus_contacts ( leaders ( auth_user_id ) )")
+    .select("name, slug, campus_contacts ( leaders ( id, auth_user_id ) )")
     .eq("id", request.campusId)
     .single<CampusWithContacts>();
   if (error) {
     console.error("[notify] campus lookup failed:", error.message);
     return;
   }
-  let ids = data.campus_contacts.flatMap(({ leaders: l }) => (l?.auth_user_id ? [l.auth_user_id] : []));
-  if (!ids.length) {
+  let recipients = data.campus_contacts.flatMap(({ leaders: l }) => (l ? [l] : []));
+  if (!recipients.length) {
     // No contacts for this campus yet: the admins pick it up instead.
-    const { data: admins } = await admin.from("leaders").select("auth_user_id").eq("is_admin", true);
-    ids = (admins ?? []).flatMap((a) => (a.auth_user_id ? [a.auth_user_id as string] : []));
+    const { data: admins } = await admin.from("leaders").select("id, auth_user_id").eq("is_admin", true);
+    recipients = (admins ?? []) as typeof recipients;
   }
-  const emails = await emailsFor(admin, ids);
+  const emails = await leaderEmails(admin, recipients);
   if (!emails.length) return;
 
   const e = escapeHtml;

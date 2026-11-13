@@ -255,5 +255,20 @@ await expect("once removed, they can't edit it", () =>
 await expect("…or see its people", () =>
   as("authenticated", CO, "select * from inquiries where study_id = $1", [NEW]), (r) => rows(r) === 0);
 
+console.log("\n— Notification email —");
+await expect("a leader sets where notifications go", () =>
+  as("authenticated", CO, "insert into leader_settings (leader_id, notify_email) values ($1, 'inbox@example.com')", [coId]), (_r, e) => !e);
+await expect("…and can change it", () =>
+  as("authenticated", CO, "update leader_settings set notify_email = 'other@example.com' where leader_id = $1", [coId]), (r) => affected(r) === 1);
+await expect("…and clear it", () =>
+  as("authenticated", CO, "update leader_settings set notify_email = null where leader_id = $1", [coId]), (r) => affected(r) === 1);
+await expect("a malformed address is refused", () =>
+  as("authenticated", CO, "update leader_settings set notify_email = 'not-an-email' where leader_id = $1", [coId]), (_r, e) => !!e);
+await expect("a leader can't set someone else's", () =>
+  as("authenticated", CO, "insert into leader_settings (leader_id, notify_email) values ($1, 'x@example.com')", [invitedId]), (_r, e) => !!e);
+await expect("visitors can't read notification emails", () => as("anon", null, "select * from leader_settings"), (r, e) => rows(r) === 0 || !!e);
+await expect("other leaders can't read them", () => as("authenticated", NEWBIE, "select * from leader_settings"), (r) => rows(r) === 0);
+await expect("not even admins browse them", () => as("authenticated", U2, "select * from leader_settings"), (r) => rows(r) === 0);
+
 console.log(`\n${failures ? `${failures} FAILED` : "All checks passed"}`);
 process.exit(failures ? 1 : 0);

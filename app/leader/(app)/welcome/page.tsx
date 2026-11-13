@@ -17,7 +17,7 @@ export default async function WelcomePage() {
           This is what visitors see next to your study. It takes about a minute.
         </p>
       </header>
-      <ProfileForm submitLabel="Continue" initial={{ name: "", bio: "", phone: "", whatsapp: false }} />
+      <ProfileForm submitLabel="Continue" initial={{ name: "", bio: "", phone: "", whatsapp: false, notifyEmail: "" }} />
     </div>
   );
 }

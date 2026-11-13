@@ -4,7 +4,16 @@ import { useActionState } from "react";
 import { buttonClass, describedBy, Field, inputClass } from "@/components/ui/field";
 import { saveProfile, type ProfileState, type ProfileValues } from "./actions";
 
-export function ProfileForm({ initial, submitLabel }: { initial: ProfileValues; submitLabel: string }) {
+export function ProfileForm({
+  initial,
+  submitLabel,
+  signInEmail,
+}: {
+  initial: ProfileValues;
+  submitLabel: string;
+  /** When given, shows the "send my notifications to" field. */
+  signInEmail?: string;
+}) {
   const [state, action, pending] = useActionState<ProfileState, FormData>(saveProfile, {
     status: "idle",
   });
@@ -58,6 +67,25 @@ export function ProfileForm({ initial, submitLabel }: { initial: ProfileValues; 
         />
         I use WhatsApp on this number
       </label>
+
+      {signInEmail && (
+        <Field
+          id="notifyEmail"
+          label="Send my notifications to"
+          optional
+          error={errors.notifyEmail}
+          hint={`Private. Leave blank to use your sign-in email (${signInEmail}). You still sign in with that one.`}
+        >
+          <input
+            {...describedBy("notifyEmail", errors.notifyEmail, true)}
+            type="email"
+            autoComplete="email"
+            defaultValue={values.notifyEmail}
+            placeholder={signInEmail}
+            className={inputClass}
+          />
+        </Field>
+      )}
 
       <div className="flex flex-wrap items-center gap-3">
         <button type="submit" disabled={pending} className={buttonClass.primary}>

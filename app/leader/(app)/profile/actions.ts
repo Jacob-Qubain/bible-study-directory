@@ -6,7 +6,14 @@ import { z } from "zod";
 import { requireUser } from "@/lib/auth";
 import { normalizePhone } from "@/lib/phone";
 
-export type ProfileValues = { name: string; bio: string; phone: string; whatsapp: boolean };
+export type ProfileValues = {
+  name: string;
+  bio: string;
+  phone: string;
+  whatsapp: boolean;
+  /** Private. Blank = notifications go to the sign-in email. */
+  notifyEmail: string;
+};
 
 export type ProfileState =
   | { status: "idle" }
@@ -28,6 +35,7 @@ export async function saveProfile(_prev: ProfileState, formData: FormData): Prom
     bio: String(formData.get("bio") ?? ""),
     phone: String(formData.get("phone") ?? ""),
     whatsapp: formData.get("whatsapp") === "on",
+    notifyEmail: String(formData.get("notifyEmail") ?? "").trim(),
   };
   const parsed = schema.safeParse(values);
   const fields: Partial<Record<keyof ProfileValues, string>> = {};
@@ -36,6 +44,9 @@ export async function saveProfile(_prev: ProfileState, formData: FormData): Prom
   }
   const phone = normalizePhone(values.phone);
   if (values.phone.trim() && !phone) fields.phone = "Use a full number, like (512) 555-0101.";
+  if (values.notifyEmail && !z.email().safeParse(values.notifyEmail).success) {
+    fields.notifyEmail = "That doesn't look like an email address.";
+  }
   if (Object.keys(fields).length || !parsed.success) {
     return { status: "error", message: "Please fix the highlighted fields.", fields, values };
   }
@@ -58,6 +69,22 @@ export async function saveProfile(_prev: ProfileState, formData: FormData): Prom
 
   // First-time setup continues to the dashboard; edits stay on the page.
   if (!leader) redirect("/leader");
+
+  // The form only includes this field on the Profile page.
+  if (formData.has("notifyEmail")) {
+    const { error: settingsError } = await supabase
+      .from("leader_settings")
+      .upsert({ leader_id: leader.id, notify_email: values.notifyEmail || null });
+    if (settingsError) {
+      console.error("[leader] saving notify email failed:", settingsError.message);
+      return {
+        status: "error",
+        message: "Your profile was saved, but we couldn't save the notification email. Please try again.",
+        fields: {},
+        values,
+      };
+    }
+  }
   refresh();
   return { status: "saved" };
 }
