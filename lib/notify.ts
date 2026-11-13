@@ -179,7 +179,13 @@ interface ListedStudy {
  * Tells a leader an admin listed their study. Invited leaders (no account yet)
  * learn that signing in with this email gives them the listing.
  */
-export async function notifyLeaderOfListing(opts: { studyId: string; leaderId: string; adminName: string }) {
+export async function notifyLeaderOfListing(opts: {
+  studyId: string;
+  leaderId: string;
+  adminName: string;
+  /** Added to a study that's already listed, alongside its other leaders. */
+  added?: boolean;
+}) {
   const admin = getSupabaseAdmin();
   if (!admin) {
     console.info("[notify] SUPABASE_SERVICE_ROLE_KEY not set; leader not told about listing.");
@@ -201,9 +207,12 @@ export async function notifyLeaderOfListing(opts: { studyId: string; leaderId: s
   const page = `${SITE_URL}/studies/${study.slug}`;
   const login = `${SITE_URL}/leader/login`;
   const campus = study.campuses?.name ?? "your campus";
+  const intro = opts.added
+    ? `${opts.adminName} added you as a leader of ${study.title} on ${SITE_NAME}, where students at ${campus} find Bible studies.`
+    : `${opts.adminName} listed ${study.title} on ${SITE_NAME}, so students at ${campus} can find it.`;
   const html = `
 <div style="font-family:system-ui,-apple-system,sans-serif;max-width:480px;color:#1a2633;line-height:1.5">
-  <p style="font-size:18px;margin:0 0 12px">Hi ${e(first)}! ${e(opts.adminName)} listed <strong>${e(study.title)}</strong> on ${e(SITE_NAME)}, so students at ${e(campus)} can find it.</p>
+  <p style="font-size:18px;margin:0 0 12px">Hi ${e(first)}! ${e(intro)}</p>
   <p style="margin:4px 0">When someone wants to come, you'll get an email with their name and how to reach them. Reply and say hi.</p>
   <p style="margin:16px 0">To change the details, pause it, or see everyone who's interested, sign in with this email address. There's no password; we email you a link.</p>
   <p><a href="${page}" style="display:inline-block;background:#236aa6;color:#fff;padding:10px 18px;border-radius:999px;text-decoration:none">See your study</a>
@@ -211,12 +220,15 @@ export async function notifyLeaderOfListing(opts: { studyId: string; leaderId: s
   <p style="color:#566374;font-size:13px">${e(SITE_NAME)}</p>
 </div>`;
   const text = [
-    `Hi ${first}! ${opts.adminName} listed ${study.title} on ${SITE_NAME}, so students at ${campus} can find it.`,
+    `Hi ${first}! ${intro}`,
     "When someone wants to come, you'll get an email with their name and how to reach them.",
     "To change the details, pause it, or see everyone who's interested, sign in with this email address (no password; we email you a link).",
     `\nSee your study: ${page}`,
     `Sign in: ${login}`,
   ].join("\n");
 
-  await sendEmail({ to: emails, subject: `${study.title} is now on ${SITE_NAME}`, html, text });
+  const subject = opts.added
+    ? `You're now a leader of ${study.title} on ${SITE_NAME}`
+    : `${study.title} is now on ${SITE_NAME}`;
+  await sendEmail({ to: emails, subject, html, text });
 }

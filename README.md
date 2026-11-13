@@ -37,6 +37,7 @@ Finding a Bible study on campus usually means a club fair table, a stale group c
 **Admins**
 - Approve new leaders before their studies go public, which keeps spam out.
 - List a study on someone's behalf: it goes live under their name, they're emailed, and signing in with that email makes it theirs.
+- Give a study several leaders, and remove them. Every leader is shown on it, can edit it, and is emailed about each new person.
 - Add campuses, choose each campus's contacts, and print a QR-code flyer for each campus.
 
 <p>
@@ -66,7 +67,7 @@ Finding a Bible study on campus usually means a club fair table, a stale group c
 ## Engineering highlights
 
 - **Access control lives in the database.** Postgres row-level security and column-level privileges decide what visitors, leaders, and admins can read and write. Leaders can only touch their own studies and can't approve themselves. Addresses and meeting links sit in a separate table that only the study's leaders can read. Visitors join through a single database function that validates the request, rate-limits it, and returns the private details. See [the migrations](supabase/migrations/).
-- **The security rules are tested.** `npm run test:db` applies every migration to an in-memory Postgres ([PGlite](https://pglite.dev)) and runs 74 checks of what each role can and can't do ([supabase/tests/rls.test.mjs](supabase/tests/rls.test.mjs)).
+- **The security rules are tested.** `npm run test:db` applies every migration to an in-memory Postgres ([PGlite](https://pglite.dev)) and runs 83 checks of what each role can and can't do ([supabase/tests/rls.test.mjs](supabase/tests/rls.test.mjs)).
 - **Schedules handle time zones correctly.** Studies are stored as local wall-clock times per campus. The next meeting is computed across daylight-saving changes, handles every-other-week studies, and never lands before the first meeting ([lib/schedule.ts](lib/schedule.ts)). Calendar invites use recurring events ([lib/calendar.ts](lib/calendar.ts)).
 - **Unmet demand becomes a plan.** When no study fits, students leave their availability instead of leaving. The missionaries' grid counts who's still looking in each day × time slot (a "flexible" student counts everywhere) and marks slots where a study already meets, so gaps worth a new study stand out ([lib/leader/requests.ts](lib/leader/requests.ts)).
 - **Joining never waits on anything else.** The leader's notification email is sent after the response goes back, using Next's `after()`, so a slow email service can't slow the visitor down ([lib/notify.ts](lib/notify.ts)).

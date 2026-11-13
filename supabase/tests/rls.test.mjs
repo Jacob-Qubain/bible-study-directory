@@ -228,5 +228,32 @@ await expect("inviting an existing account links straight to it", () =>
   as("authenticated", U2, "select admin_invite_leader('Someone', 'newleader@example.com') id"),
   (r) => r?.rows[0]?.id === u1Leader);
 
+console.log("\n— Several leaders on one study —");
+const CO = "77777777-7777-4777-8777-777777777777"; // co-leader
+await db.exec(`insert into auth.users values ('${CO}', 'co@example.com');
+  insert into leaders (auth_user_id, name, approved) values ('${CO}', 'Co Leader', true);`);
+const coId = (await db.query("select id from leaders where auth_user_id = $1", [CO])).rows[0].id;
+await expect("a leader can't add a co-leader themselves", () =>
+  as("authenticated", NEWBIE, "insert into study_leaders (study_id, leader_id, role) values ($1, $2, 'co_leader')", [NEW, coId]), (_r, e) => !!e);
+await expect("admin adds a second leader", () =>
+  as("authenticated", U2, "insert into study_leaders (study_id, leader_id, role, sort_order) values ($1, $2, 'co_leader', 1)", [NEW, coId]), (_r, e) => !e);
+await expect("the new leader is shown publicly with the others", () =>
+  as("anon", null, "select leader_id from study_leaders where study_id = $1", [NEW]),
+  (r) => rows(r) === 3 && r.rows.some((x) => x.leader_id === coId));
+await expect("the second leader can edit the study", () =>
+  as("authenticated", CO, "update bible_studies set summary = 'Co-led' where id = $1", [NEW]), (r) => affected(r) === 1);
+await expect("…and see who wants to come", async () => {
+  await as("anon", null, "select * from submit_inquiry($1, 'Pat', 'pat@example.com')", [NEW]);
+  return as("authenticated", CO, "select name from inquiries where study_id = $1 and name = 'Pat'", [NEW]);
+}, (r) => rows(r) === 1);
+await expect("a leader can't remove another leader", () =>
+  as("authenticated", CO, "delete from study_leaders where study_id = $1 and leader_id = $2 returning 1", [NEW, invitedId]), (r) => rows(r) === 0);
+await expect("admin removes the second leader", () =>
+  as("authenticated", U2, "delete from study_leaders where study_id = $1 and leader_id = $2 returning 1", [NEW, coId]), (r) => rows(r) === 1);
+await expect("once removed, they can't edit it", () =>
+  as("authenticated", CO, "update bible_studies set summary = 'x' where id = $1", [NEW]), (r) => affected(r) === 0);
+await expect("…or see its people", () =>
+  as("authenticated", CO, "select * from inquiries where study_id = $1", [NEW]), (r) => rows(r) === 0);
+
 console.log(`\n${failures ? `${failures} FAILED` : "All checks passed"}`);
 process.exit(failures ? 1 : 0);
